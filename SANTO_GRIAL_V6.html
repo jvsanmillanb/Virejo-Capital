@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SANTO GRIAL v6 — Asistente de Decisión</title>
+<style>
+:root{--blue:#1B4F8A;--blue2:#2E6DA4;--green:#1a7a40;--red:#c0392b;--orange:#e67e22;--bg:#f0f4f8;--card:#fff;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:#222;font-size:15px}
+header{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;padding:20px 24px}
+header h1{font-size:21px;font-weight:700}
+header .sub{font-size:12px;opacity:.75;margin-top:4px}
+#fecha-header{font-size:13px;opacity:.9;margin-top:6px;font-weight:600}
+.wizard{max-width:740px;margin:0 auto;padding:20px 16px 60px}
+.progress{height:4px;background:#dde4ef;border-radius:2px;margin-bottom:20px}
+.progress-fill{height:4px;background:var(--blue2);border-radius:2px;transition:width .4s}
+.step{background:var(--card);border-radius:10px;border:1px solid #dde4ef;padding:22px 24px;margin-bottom:16px;display:none;animation:fadeIn .3s ease;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.step.visible{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.step-num{display:inline-flex;align-items:center;justify-content:center;background:var(--blue);color:#fff;border-radius:50%;width:26px;height:26px;font-size:12px;font-weight:700;margin-right:8px;flex-shrink:0}
+.step-title{font-size:16px;font-weight:700;color:var(--blue);margin-bottom:12px;display:flex;align-items:center}
+.btn-group{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.btn{padding:11px 20px;border:none;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600;transition:.15s}
+.btn:hover{filter:brightness(.92)}
+.btn-yes{background:#d4edda;color:#155724;border:2px solid #c3e6cb}
+.btn-no{background:#f8d7da;color:#721c24;border:2px solid #f5c6cb}
+.btn-warn{background:#fff3cd;color:#856404;border:2px solid #ffeeba}
+.btn-primary{background:var(--blue);color:#fff;border:2px solid var(--blue)}
+.btn.selected{outline:3px solid #1B4F8A;outline-offset:2px}
+.result{border-radius:7px;padding:12px 16px;margin-top:10px;font-size:14px;line-height:1.65}
+.result-ok{background:#d4edda;color:#155724;border-left:5px solid var(--green)}
+.result-warn{background:#fff3cd;color:#856404;border-left:5px solid var(--orange)}
+.result-alert{background:#f8d7da;color:#721c24;border-left:5px solid var(--red)}
+.result-info{background:#dbeafe;color:#1e3a5f;border-left:5px solid var(--blue2)}
+.result-short{background:#ffe4e4;color:#5a0000;border-left:5px solid #8B0000;font-weight:600}
+.nota{background:#f8f9ff;border-radius:6px;padding:9px 12px;border-left:3px solid var(--blue2);font-size:13px;color:#444;margin-bottom:12px;line-height:1.5}
+label{display:block;font-size:12px;color:#666;font-weight:600;margin-bottom:5px}
+input[type=number]{padding:10px 12px;border:2px solid #ccc;border-radius:6px;font-size:16px;outline:none}
+input[type=number]:focus{border-color:var(--blue)}
+select{padding:9px 10px;border:2px solid #ccc;border-radius:6px;font-size:13px;background:#fff;outline:none;cursor:pointer;width:100%}
+select:focus{border-color:var(--blue)}
+.hint{font-size:11px;color:#999;margin-top:6px;line-height:1.5}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--blue);color:#fff;padding:7px 10px;text-align:left;font-weight:600}
+td{padding:7px 10px;border-bottom:1px solid #eee;vertical-align:middle}
+tr:nth-child(even) td{background:#f7f9fc}
+.mes-box{background:var(--blue2);color:#fff;border-radius:8px;padding:16px 20px;margin-top:12px}
+.mes-box .activos{font-size:20px;font-weight:700;margin-top:5px}
+.mes-box .detalle{font-size:13px;opacity:.85;margin-top:4px}
+.adn-bar{height:18px;border-radius:9px;background:linear-gradient(to right,#c0392b 0%,#e67e22 30%,#f5a500 50%,#27ae60 80%,#1a7a40 100%);position:relative;margin:8px 0 3px}
+.adn-pin{position:absolute;top:-5px;width:4px;height:28px;background:#111;border-radius:2px;transform:translateX(-50%);transition:left .4s}
+.adn-labels{display:flex;justify-content:space-between;font-size:10px;color:#888}
+.resumen-box{background:var(--blue);color:#fff;border-radius:10px;padding:24px;margin-top:8px;display:none}
+.resumen-box h2{font-size:18px;font-weight:700;margin-bottom:16px;border-bottom:1px solid rgba(255,255,255,.3);padding-bottom:10px}
+.orden{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;margin:4px 0;border-radius:6px;font-size:13px;gap:10px}
+.orden-compra{background:#d4edda;color:#155724}
+.orden-venta{background:#f8d7da;color:#721c24}
+.orden-short{background:#ffe4e4;color:#5a0000;font-weight:700}
+.orden-cubrir{background:#d4edda;color:#155724}
+.orden-mantener{background:#e8f0f8;color:#1e3a5f}
+.orden-alerta{background:#fff3cd;color:#856404}
+.orden-sep{color:rgba(255,255,255,.55);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin:12px 0 3px;padding:0 4px}
+.orden-imp{font-weight:700;font-size:12px;white-space:nowrap}
+.reset-btn{display:block;width:100%;text-align:center;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:6px;padding:12px;margin-top:18px;cursor:pointer;font-size:14px}
+.reset-btn:hover{background:rgba(255,255,255,.25)}
+/* TABS */
+.mode-tabs{display:flex;gap:0;margin-bottom:20px;border-radius:10px;overflow:hidden;border:2px solid var(--blue);background:var(--blue)}
+.tab-btn{flex:1;padding:13px 10px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:transparent;color:rgba(255,255,255,.65);transition:.2s}
+.tab-btn.tab-active{background:#fff;color:var(--blue)}
+/* QUICK MODE */
+.q-step{background:#fff;border-radius:10px;border:1px solid #dde4ef;padding:20px 22px;margin-bottom:12px;display:none;animation:fadeIn .3s ease;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.q-step.visible{display:block}
+.q-pregunta{font-size:16px;font-weight:700;color:var(--blue);margin-bottom:6px}
+.q-sub{font-size:12px;color:#777;margin-bottom:12px;line-height:1.5}
+.q-donde{font-size:11px;background:#f0f4ff;border-radius:5px;padding:6px 10px;margin-bottom:12px;color:#444;border-left:3px solid var(--blue2)}
+.q-btns{display:flex;gap:8px;flex-wrap:wrap}
+.qb{padding:12px 18px;border:2px solid;border-radius:7px;cursor:pointer;font-size:14px;font-weight:700;transition:.15s;flex:1;min-width:120px;text-align:center}
+.qb:hover{filter:brightness(.93)}
+.qb-verde{background:#d4edda;color:#155724;border-color:#c3e6cb}
+.qb-rojo{background:#f8d7da;color:#721c24;border-color:#f5c6cb}
+.qb-naranja{background:#fff3cd;color:#856404;border-color:#ffeeba}
+.qb-azul{background:#dbeafe;color:#1e3a5f;border-color:#bfdbfe}
+.q-input-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.q-resumen{background:var(--blue);color:#fff;border-radius:10px;padding:22px;margin-top:4px;display:none}
+.q-resumen h2{font-size:17px;font-weight:700;margin-bottom:14px;border-bottom:1px solid rgba(255,255,255,.3);padding-bottom:10px}
+@media(max-width:580px){.tab-btn{font-size:12px;padding:11px 6px}.btn{font-size:13px;padding:10px 14px}.qb{font-size:13px;padding:10px 12px}}
+/* ADN TIEMPO REAL */
+.adn-live-panel{background:#eaf3ff;border:1.5px solid #93c5fd;border-radius:8px;padding:13px 16px;margin:10px 0}
+.adn-live-header{font-size:11px;color:#3b6ea5;margin-bottom:6px;font-weight:600;letter-spacing:.3px}
+.adn-live-value{font-size:28px;font-weight:800;color:var(--blue);line-height:1.1}
+.adn-live-detail{font-size:13px;color:#333;margin-top:5px}
+.adn-live-formula{font-size:11px;color:#888;margin-top:4px;font-style:italic}
+.adn-live-btn{margin-top:10px;padding:9px 16px;background:var(--blue);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:700}
+.adn-live-btn:hover{filter:brightness(.88)}
+.adn-live-error{background:#fff3cd;border-radius:6px;padding:10px 13px;margin:8px 0;font-size:13px;color:#856404;border-left:3px solid var(--orange)}
+.adn-live-used{font-size:12px;color:#155724;margin-top:8px;font-weight:600;background:#d4edda;border-radius:4px;padding:5px 9px;display:inline-block}
+.adn-links{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 6px}
+.adn-link{padding:8px 13px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:700;border:1.5px solid;transition:.15s;display:inline-flex;align-items:center;gap:5px;cursor:pointer;background:none}
+.adn-link-auto{background:#e0f0ff;color:#1a5e85;border-color:#7ec8e3}
+.adn-link-auto:hover{background:#c8e6fa}
+.adn-link-ext{background:#f0f4ff;color:#3730a3;border-color:#a5b4fc}
+.adn-link-ext:hover{background:#e0e8ff}
+/* ── VERIFICAR CARTERA ── */
+.c-section{background:#fff;border-radius:10px;border:1px solid #dde4ef;padding:22px 24px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.c-section-title{font-size:16px;font-weight:700;color:var(--blue);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.c-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
+.c-table th{background:var(--blue);color:#fff;padding:7px 10px;text-align:left;font-weight:600;font-size:12px}
+.c-table td{padding:6px 8px;border-bottom:1px solid #eee;vertical-align:middle}
+.c-table input[type=text]{width:68px;padding:5px 7px;border:1.5px solid #ccc;border-radius:5px;font-size:12px;outline:none;text-transform:uppercase}
+.c-table input[type=number]{width:92px;padding:5px 7px;border:1.5px solid #ccc;border-radius:5px;font-size:12px;outline:none}
+.c-table tr:nth-child(even) td{background:#f8faff}
+.c-res-venta{background:#f8d7da;border-radius:6px;padding:9px 13px;margin:3px 0;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;color:#721c24}
+.c-res-compra{background:#d4edda;border-radius:6px;padding:9px 13px;margin:3px 0;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;color:#155724}
+.c-res-mantener{background:#e8f0f8;border-radius:6px;padding:9px 13px;margin:3px 0;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;color:#1e3a5f}
+.c-res-alerta{background:#fff3cd;border-radius:6px;padding:9px 13px;margin:6px 0;font-size:13px;color:#856404;border-left:4px solid var(--orange)}
+.c-res-imp{font-weight:700;font-size:12px;white-space:nowrap;flex-shrink:0}
+</style>
+</head>
+<body>
+<header>
+  <h1>⚜ SANTO GRIAL v6 — Asistente de Decisión</h1>
+  <div class="sub">Sharpe 1,70 · Capa ADN&lt;80 activa · Backtest 2006-2025</div>
+  <div id="fecha-header"></div>
+</header>
+
+<div class="wizard">
+
+<div class="mode-tabs">
+  <button class="tab-btn tab-active" id="tab-degiro" onclick="setTab('degiro')">💼 DEGIRO</button>
+  <button class="tab-btn" id="tab-ib" onclick="setTab('ib')">📊 IB</button>
+</div>
+
+<!-- ═══════════════════ DEGIRO ═══════════════════ -->
+<div id="mode-degiro">
+
+<div class="c-section">
+  <div class="c-section-title"><span class="step-num">💼</span>Verificar cartera DEGIRO</div>
+  <div class="nota">Introduce el <strong>NAV actual</strong> de tu cuenta en DEGIRO (valor total de posiciones SANTO GRIAL + efectivo). Cuenta Trader: incluye cobertura con futuros (shorts NQ/ES/FESX) igual que en IB.</div>
+
+  <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:16px;align-items:flex-end">
+    <div>
+      <label>NAV actual de la cuenta DEGIRO (€)</label>
+      <input type="number" id="d-nav" value="53300" min="100" step="100" style="width:190px;padding:10px 12px;border:2px solid #ccc;border-radius:6px;font-size:15px;outline:none">
+      <div class="hint">Suma de ETFs SANTO GRIAL + efectivo disponible</div>
+    </div>
+    <div>
+      <label>Mes actual</label>
+      <select id="d-mes" style="width:155px;padding:9px 10px;border:2px solid #ccc;border-radius:6px;font-size:13px;background:#fff;outline:none">
+        <option value="1">Enero</option><option value="2">Febrero</option>
+        <option value="3">Marzo</option><option value="4">Abril</option>
+        <option value="5">Mayo</option><option value="6">Junio</option>
+        <option value="7">Julio</option><option value="8">Agosto</option>
+        <option value="9">Septiembre</option><option value="10">Octubre</option>
+        <option value="11">Noviembre</option><option value="12">Diciembre</option>
+      </select>
+    </div>
+    <div>
+      <label>ADN ($NYA50R) actual</label>
+      <input type="number" id="d-adn" min="0" max="100" step="1" placeholder="ej: 35" style="width:110px;padding:10px 12px;border:2px solid #ccc;border-radius:6px;font-size:15px;outline:none">
+    </div>
+  </div>
+
+  <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:14px">
+    <div>
+      <label style="display:block;font-size:12px;color:#666;font-weight:600;margin-bottom:6px">GEMINI (Coppock SPY mensual)</label>
+      <div class="btn-group">
+        <button class="btn btn-yes" id="d-gem-on" onclick="dSetGemini(true)">📈 Risk-ON</button>
+        <button class="btn btn-no" id="d-gem-off" onclick="dSetGemini(false)">📉 Risk-OFF</button>
+      </div>
+    </div>
+    <div>
+      <label style="display:block;font-size:12px;color:#666;font-weight:600;margin-bottom:6px">Coppock M6E (EUR/USD mensual)</label>
+      <div class="btn-group">
+        <button class="btn btn-yes" id="d-m6e-pos" onclick="dSetM6e(true)">✅ Encima de cero</button>
+        <button class="btn btn-no" id="d-m6e-neg" onclick="dSetM6e(false)">🛑 Debajo de cero</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="font-size:13px;font-weight:700;color:var(--blue);margin-top:18px;margin-bottom:6px">Tus posiciones actuales en DEGIRO (ETFs)</div>
+  <div class="nota" style="margin-bottom:10px">Los tickers son editables. Pon <strong>0</strong> en acciones si no tienes esa posición.</div>
+
+  <table class="c-table">
+    <thead>
+      <tr><th>Bloque</th><th>Ticker ETF</th><th>Acciones que tienes</th><th>Precio actual (€)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Estacional</strong></td>
+        <td><input type="text" class="d-ticker" data-block="est" value="SXRV"></td>
+        <td><input type="number" class="d-shares" data-block="est" value="6" min="0"></td>
+        <td><input type="number" class="d-price" data-block="est" value="1439.40" min="0" step="0.01"></td>
+      </tr>
+      <tr><td>Inercia USA #1</td>
+        <td><input type="text" class="d-ticker" data-block="usa1" value="IUES"></td>
+        <td><input type="number" class="d-shares" data-block="usa1" value="608" min="0"></td>
+        <td><input type="number" class="d-price" data-block="usa1" value="10.65" min="0" step="0.001"></td>
+      </tr>
+      <tr><td>Inercia USA #2</td>
+        <td><input type="text" class="d-ticker" data-block="usa2" value="QDVE"></td>
+        <td><input type="number" class="d-shares" data-block="usa2" value="0" min="0"></td>
+        <td><input type="number" class="d-price" data-block="usa2" value="0" min="0" step="0.001"></td>
+      </tr>
+      <tr><td>Inercia EU #1</td>
+        <td><input type="text" class="d-ticker" data-block="eu1" value="EXV7"></td>
+        <td><input type="number" class="d-shares" data-block="eu1" value="21" min="0"></td>
+        <td><input type="number" class="d-price" data-block="eu1" value="118.94" min="0" step="0.01"></td>
+      </tr>
+      <tr><td>Inercia EU #2</td>
+        <td><input type="text" class="d-ticker" data-block="eu2" value="EXH1"></td>
+        <td><input type="number" class="d-shares" data-block="eu2" value="5" min="0"></td>
+        <td><input type="number" class="d-price" data-block="eu2" value="53.82" min="0" step="0.01"></td>
+      </tr>
+      <tr><td>GEMINI — VECA</td>
+        <td><input type="text" class="d-ticker" data-block="veca" value="VECA"></td>
+        <td><input type="number" class="d-shares" data-block="veca" value="0" min="0"></td>
+        <td><input type="number" class="d-price" data-block="veca" value="0" min="0" step="0.001"></td>
+      </tr>
+      <tr><td>GEMINI — ERNA</td>
+        <td><input type="text" class="d-ticker" data-block="erna" value="ERNA"></td>
+        <td><input type="number" class="d-shares" data-block="erna" value="2360" min="0"></td>
+        <td><input type="number" class="d-price" data-block="erna" value="5.47" min="0" step="0.001"></td>
+      </tr>
+      <tr><td>GEMINI — ERNX</td>
+        <td><input type="text" class="d-ticker" data-block="ernx" value="ERNX"></td>
+        <td><input type="number" class="d-shares" data-block="ernx" value="4044" min="0"></td>
+        <td><input type="number" class="d-price" data-block="ernx" value="5.566" min="0" step="0.001"></td>
+      </tr>
+      <tr><td><em>Posición extra 1</em></td>
+        <td><input type="text" class="d-ticker" data-block="other1" value=""></td>
+        <td><input type="number" class="d-shares" data-block="other1" value="0" min="0"></td>
+        <td><input type="number" class="d-price" data-block="other1" value="0" min="0" step="0.001"></td>
+      </tr>
+      <tr><td><em>Posición extra 2</em></td>
+        <td><input type="text" class="d-ticker" data-block="other2" value=""></td>
+        <td><input type="number" class="d-shares" data-block="other2" value="0" min="0"></td>
+        <td><input type="number" class="d-price" data-block="other2" value="0" min="0" step="0.001"></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <button class="btn btn-primary" onclick="calcularDegiro()" style="margin-top:18px;width:100%;padding:14px;font-size:15px">
+    Calcular qué tengo que comprar y vender →
+  </button>
+</div>
+
+<div class="resumen-box" id="d-resultado">
+  <h2>📋 ÓRDENES DE REBALANCEO — DEGIRO</h2>
+  <div id="d-ordenes-lista"></div>
+  <div id="d-cash-info" style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.25);font-size:13px"></div>
+  <button class="reset-btn" onclick="resetDegiro()">↺ Nueva verificación</button>
+</div>
+
+<!-- ── Asistente mensual DEGIRO ── -->
+<div style="border-top:2px solid #dde4ef;margin:28px 0 20px;padding-top:10px">
+  <div style="font-size:16px;font-weight:700;color:var(--blue);margin-bottom:4px">🧭 Asistente mensual DEGIRO</div>
+  <div class="hint">Guía paso a paso para obtener las órdenes del mes en tu cuenta DEGIRO.</div>
+</div>
+<div class="progress"><div class="progress-fill" id="dw-prog" style="width:0%"></div></div>
+
+<div class="step visible" id="dw-s0">
+  <div class="step-title"><span class="step-num">€</span>Capital total en DEGIRO</div>
+  <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+    <div><label>NAV cuenta DEGIRO (€)</label>
+    <input type="number" id="dw-capital" value="53300" min="1000" step="100" style="width:180px"></div>
+    <button class="btn btn-primary" onclick="dwOnCapital()">Continuar →</button>
+  </div>
+  <div class="hint">Todos los importes se calcularán sobre este valor total.</div>
+  <div id="dw-capital-result"></div>
+</div>
+
+<div class="step" id="dw-s1">
+  <div class="step-title"><span class="step-num">1</span>¿En qué mes y año estamos?</div>
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <select id="dw-sel-mes" style="width:180px">
+      <option value="1">Enero</option><option value="2">Febrero</option>
+      <option value="3">Marzo</option><option value="4">Abril</option>
+      <option value="5">Mayo</option><option value="6">Junio</option>
+      <option value="7">Julio</option><option value="8">Agosto</option>
+      <option value="9">Septiembre</option><option value="10">Octubre</option>
+      <option value="11">Noviembre</option><option value="12">Diciembre</option>
+    </select>
+    <select id="dw-sel-anio" style="width:100px"></select>
+    <button class="btn btn-primary" onclick="dwOnMes()">Confirmar →</button>
+  </div>
+  <div id="dw-mes-result"></div>
+</div>
+
+<div class="step" id="dw-s2">
+  <div class="step-title"><span class="step-num">2</span>Coppock M6E (EUR/USD mensual)</div>
+  <div class="nota">ProRealTime → gráfico mensual EUR/USD → indicador Coppock M6E. Sobre cero → sin acción. Bajo cero → stop 6,5%.</div>
+  <div class="btn-group">
+    <button class="btn btn-yes" id="dw-b-m6e-pos" onclick="dwOnM6e(true)">✅ Encima de cero — Sin alerta</button>
+    <button class="btn btn-no" id="dw-b-m6e-neg" onclick="dwOnM6e(false)">🛑 Debajo de cero — Stop 6,5%</button>
+  </div>
+  <div id="dw-m6e-result"></div>
+</div>
+
+<div class="step" id="dw-s3">
+  <div class="step-title"><span class="step-num">3</span>GEMINI (Coppock SPY mensual)</div>
+  <div class="nota">TradingView → SPY mensual → "Coppock Curve". Sobre cero → Risk-ON. Bajo cero → Risk-OFF.</div>
+  <div class="btn-group">
+    <button class="btn btn-yes" id="dw-b-gem-on" onclick="dwOnGemini(true)">📈 Encima de cero → RISK-ON</button>
+    <button class="btn btn-no" id="dw-b-gem-off" onclick="dwOnGemini(false)">📉 Debajo de cero → RISK-OFF</button>
+  </div>
+  <div id="dw-gem-result"></div>
+</div>
+
+<div class="step" id="dw-s3b">
+  <div class="step-title"><span class="step-num">3b</span>Stop GEMINI — ¿SPY cayó más del 8% desde tu entrada en Risk-ON?</div>
+  <div class="nota">Si llevas en Risk-ON y el SPY ha caído más de un 8% desde cuando entraste → pasar a Risk-OFF inmediatamente.</div>
+  <div class="btn-group">
+    <button class="btn btn-no" id="dw-b-spy-si" onclick="dwOnSpyStop(true)">⚠️ SÍ, cayó más del 8% → Forzar Risk-OFF</button>
+    <button class="btn btn-yes" id="dw-b-spy-no" onclick="dwOnSpyStop(false)">✅ NO, caída menor del 8%</button>
+  </div>
+  <div id="dw-spy-result"></div>
+</div>
+
+<div class="step" id="dw-s4">
+  <div class="step-title"><span class="step-num">4</span>¿Cuánto vale el ADN ($NYA50R) hoy?</div>
+  <div class="nota">• ADN ≥ 80 → sin cobertura &nbsp;• ADN 40–80 → abrir cortos (Trader DEGIRO) &nbsp;• ADN &lt; 40 → cortos + cierres parciales ETF</div>
+  <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-top:10px">
+    <div><label>Valor ADN (0–100)</label>
+    <input type="number" id="dw-adn-val" min="0" max="100" step="1" placeholder="ej: 35" style="width:110px"></div>
+    <button class="btn btn-primary" onclick="dwOnAdn()">Confirmar →</button>
+  </div>
+  <div id="dw-adn-result"></div>
+</div>
+
+<div class="step" id="dw-s4b">
+  <div class="step-title"><span class="step-num">4b</span>¿Tuviste en algún momento el ADN por debajo de 40 y cerraste posiciones parcialmente?</div>
+  <div class="nota">Si antes el ADN bajó de 40 y redujiste posiciones (70% ETFs equity, 25% SGLD/USA), responde SÍ para ver las órdenes de recompra en el resumen.</div>
+  <div class="btn-group">
+    <button class="btn btn-warn" id="dw-b-adn40-si" onclick="dwOnHadAdn40(true)">⚠️ SÍ — Tengo posiciones parcialmente cerradas</button>
+    <button class="btn btn-yes" id="dw-b-adn40-no" onclick="dwOnHadAdn40(false)">✅ NO — Posiciones completas</button>
+  </div>
+  <div id="dw-adn40-result"></div>
+</div>
+
+<div class="step" id="dw-s5">
+  <div class="step-title"><span class="step-num">5</span>¿Tenías posiciones cortas en futuros (NQ/ES/FESX)?</div>
+  <div class="nota">Si el mes pasado el ADN estaba bajo 80, deberías tener cortos abiertos en tu cuenta Trader DEGIRO. ¿Siguen abiertos?</div>
+  <div class="btn-group">
+    <button class="btn btn-warn" id="dw-b-hedge-si" onclick="dwOnHedgePrev(true)">⚠️ SÍ, tengo cortos abiertos</button>
+    <button class="btn btn-yes" id="dw-b-hedge-no" onclick="dwOnHedgePrev(false)">✅ NO, sin posiciones cortas</button>
+  </div>
+  <div id="dw-hedge-result"></div>
+</div>
+
+<div class="step" id="dw-s5b">
+  <div class="step-title"><span class="step-num">5b</span>¿Cuál fue el ADN mínimo desde que abriste los cortos?</div>
+  <div class="nota">Mira el histórico de $NYA50R en TradingView y busca el valor mínimo desde que abriste los futuros.</div>
+  <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-top:10px">
+    <div><label>ADN mínimo alcanzado</label>
+    <input type="number" id="dw-adn-min-val" min="0" max="100" step="1" placeholder="0–100" style="width:110px"></div>
+    <button class="btn btn-primary" onclick="dwOnAdnMin()">Confirmar →</button>
+  </div>
+  <div id="dw-hedge-exit-result"></div>
+</div>
+
+<div class="step" id="dw-s6">
+  <div class="step-title"><span class="step-num">6</span>Inercia — ¿Cambian los sectores top?</div>
+  <div class="nota">Consulta el ranking IA mensual. <strong>Top 2 USA + Top 2 EU</strong> (4,5% del capital cada uno).</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+    <div><label>USA actual #1</label><select id="dw-usa-act-1"></select>
+      <label style="margin-top:8px">USA actual #2</label><select id="dw-usa-act-2"></select></div>
+    <div><label>USA nuevo #1</label><select id="dw-usa-new-1"></select>
+      <label style="margin-top:8px">USA nuevo #2</label><select id="dw-usa-new-2"></select></div>
+    <div><label>EU actual #1</label><select id="dw-eu-act-1"></select>
+      <label style="margin-top:8px">EU actual #2</label><select id="dw-eu-act-2"></select></div>
+    <div><label>EU nuevo #1</label><select id="dw-eu-new-1"></select>
+      <label style="margin-top:8px">EU nuevo #2</label><select id="dw-eu-new-2"></select></div>
+  </div>
+  <button class="btn btn-primary" onclick="dwOnInercia()" style="margin-top:14px">Ver resultado →</button>
+  <div id="dw-inercia-result"></div>
+</div>
+
+<div class="resumen-box" id="dw-resumen">
+  <h2>📋 ÓRDENES DEL MES — DEGIRO</h2>
+  <div id="dw-ordenes-lista"></div>
+  <button class="reset-btn" onclick="dwResetWizard()">↺ Reiniciar asistente DEGIRO</button>
+</div>
+
+<div id="calc-section-dw" style="display:none;background:#fff;border-radius:10px;border:1px solid #dde4ef;padding:22px 24px;margin-top:16px;box-shadow:0 2px 8px rgba(0,0,0,.06)">
+  <div style="font-size:16px;font-weight:700;color:var(--blue);margin-bottom:8px">🔢 Calcular nº de acciones y contratos</div>
+  <div class="nota">Introduce los precios actuales. Los cálculos se actualizan al escribir. Campos opcionales — deja en blanco los que no necesites.</div>
+  <div id="calc-fields-dw" style="margin-top:12px"></div>
+</div>
+
+</div><!-- /mode-degiro -->
+
+<!-- ═══════════════════ IB ═══════════════════ -->
+<div id="mode-ib" style="display:none">
+
+<!-- ── Asistente mensual IB ── -->
+<div style="margin-bottom:20px">
+  <div style="font-size:16px;font-weight:700;color:var(--blue);margin-bottom:4px">🧭 Asistente mensual IB</div>
+  <div class="hint">Guía paso a paso para calcular las órdenes del mes en tu cuenta Interactive Brokers.</div>
+</div>
+<div class="progress"><div class="progress-fill" id="prog" style="width:0%"></div></div>
+
+<div class="step visible" id="s0">
+  <div class="step-title"><span class="step-num">€</span>Capital total disponible</div>
+  <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+    <div><label>Capital total (€)</label>
+    <input type="number" id="capital" value="1000000" min="10000" step="10000" style="width:180px"></div>
+    <button class="btn btn-primary" onclick="onCapital()">Continuar →</button>
+  </div>
+  <div class="hint">Todos los importes del mes se calcularán sobre este capital.</div>
+  <div id="capital-result"></div>
+</div>
+
+<div class="step" id="s1">
+  <div class="step-title"><span class="step-num">1</span>¿En qué mes y año estamos?</div>
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <select id="sel-mes" style="width:180px">
+      <option value="1">Enero</option><option value="2">Febrero</option>
+      <option value="3">Marzo</option><option value="4">Abril</option>
+      <option value="5">Mayo</option><option value="6">Junio</option>
+      <option value="7">Julio</option><option value="8">Agosto</option>
+      <option value="9">Septiembre</option><option value="10">Octubre</option>
+      <option value="11">Noviembre</option><option value="12">Diciembre</option>
+    </select>
+    <select id="sel-anio" style="width:100px"></select>
+    <button class="btn btn-primary" onclick="onMes()">Confirmar →</button>
+  </div>
+  <div id="mes-result"></div>
+</div>
+
+<div class="step" id="s2">
+  <div class="step-title"><span class="step-num">2</span>Coppock M6E (EUR/USD mensual) — ¿Encima o debajo de cero?</div>
+  <div class="nota">Abre el gráfico <strong>mensual de EUR/USD</strong> en ProRealTime y aplica el indicador de la carpeta <em>recursos/</em>. Si la línea está sobre cero → sin acción. Si cruza a negativo → stop 6,5%.</div>
+  <div class="btn-group">
+    <button class="btn btn-yes" id="b-m6e-pos" onclick="onM6e(true)">✅ Encima de cero — Sin alerta</button>
+    <button class="btn btn-no" id="b-m6e-neg" onclick="onM6e(false)">🛑 Debajo de cero — Aplicar stop 6,5%</button>
+  </div>
+  <div id="m6e-result"></div>
+</div>
+
+<div class="step" id="s3">
+  <div class="step-title"><span class="step-num">3</span>GEMINI (Coppock SPY mensual) — ¿Risk-ON o Risk-OFF?</div>
+  <div class="nota">En TradingView: abre <strong>SPY en mensual</strong> y añade el indicador "Coppock Curve". Si la línea está sobre cero → Risk-ON. Si está bajo cero → Risk-OFF.</div>
+  <div class="btn-group">
+    <button class="btn btn-yes" id="b-gem-on" onclick="onGemini(true)">📈 Encima de cero → RISK-ON</button>
+    <button class="btn btn-no" id="b-gem-off" onclick="onGemini(false)">📉 Debajo de cero → RISK-OFF</button>
+  </div>
+  <div id="gem-result"></div>
+</div>
+
+<div class="step" id="s3b">
+  <div class="step-title"><span class="step-num">3b</span>Stop GEMINI — ¿El SPY cayó más del 8% desde tu entrada en Risk-ON?</div>
+  <div class="nota">Si llevas en Risk-ON y el SPY ha caído más de un 8% desde cuando entraste → el sistema obliga a pasar a Risk-OFF inmediatamente, sin esperar al fin de mes.</div>
+  <div class="btn-group">
+    <button class="btn btn-no" id="b-spy-si" onclick="onSpyStop(true)">⚠️ SÍ, cayó más del 8% → Forzar Risk-OFF</button>
+    <button class="btn btn-yes" id="b-spy-no" onclick="onSpyStop(false)">✅ NO, caída menor del 8%</button>
+  </div>
+  <div id="spy-result"></div>
+</div>
+
+<div class="step" id="s4">
+  <div class="step-title"><span class="step-num">4</span>¿Cuánto vale el ADN ($NYA50R) hoy?</div>
+  <div class="nota">• ADN ≥ 80 → mercado normal, sin cobertura<br>• ADN 40–80 → estrés → abrir cortos en futuros<br>• ADN &lt; 40 → pánico → cortos + cierres parciales en ETFs</div>
+  <div style="margin:10px 0">
+    <a class="adn-link adn-link-ext" href="https://amplitudmercado.com/nyse/adn" target="_blank">🌐 Consultar ADN en amplitudmercado.com ↗</a>
+  </div>
+  <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-top:10px">
+    <div><label>Introduce el valor del ADN ($NYA50R):</label>
+    <input type="number" id="adn-val" min="0" max="100" step="1" placeholder="ej: 75" style="width:130px"></div>
+    <button class="btn btn-primary" onclick="onAdn()">Continuar →</button>
+  </div>
+  <div id="adn-result"></div>
+</div>
+
+<div class="step" id="s4b">
+  <div class="step-title"><span class="step-num">4b</span>¿Tuviste en algún momento el ADN por debajo de 40 y cerraste posiciones parcialmente?</div>
+  <div class="nota">Si antes el ADN bajó de 40 y redujiste posiciones (70% ETFs equity, 25% SGLD/USA), responde SÍ para ver las órdenes de recompra en el resumen.</div>
+  <div class="btn-group">
+    <button class="btn btn-warn" id="b-adn40-si" onclick="onHadAdn40(true)">⚠️ SÍ — Tengo posiciones parcialmente cerradas</button>
+    <button class="btn btn-yes" id="b-adn40-no" onclick="onHadAdn40(false)">✅ NO — Posiciones completas</button>
+  </div>
+  <div id="adn40-result"></div>
+</div>
+
+<div class="step" id="s5">
+  <div class="step-title"><span class="step-num">5</span>¿Tienes ya posiciones cortas en futuros abiertas?</div>
+  <div class="nota">Cortos = ventas de futuros (NQ, ES, FESX). Ganan cuando el mercado baja. Son la cobertura de la capa ADN&lt;80. <em>No son los ETFs</em> — son posiciones adicionales de protección.</div>
+  <div class="btn-group">
+    <button class="btn btn-no" id="b-hedge-si" onclick="onHedgePrev(true)">⚠️ SÍ, tengo cortos activos</button>
+    <button class="btn btn-yes" id="b-hedge-no" onclick="onHedgePrev(false)">✅ NO, sin posiciones cortas</button>
+  </div>
+  <div id="hedge-result"></div>
+</div>
+
+<div class="step" id="s5b">
+  <div class="step-title"><span class="step-num">5b</span>¿Cuál fue el ADN mínimo alcanzado desde que abriste los cortos?</div>
+  <div class="nota">Necesito saber si el ADN bajó de 50 o de 20, porque si ahora ha subido por encima de esos niveles → señal de cierre anticipado.</div>
+  <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-top:10px">
+    <div><label>ADN mínimo desde apertura de cortos</label>
+    <input type="number" id="adn-min-val" min="0" max="100" step="1" placeholder="ej: 42" style="width:130px"></div>
+    <button class="btn btn-primary" onclick="onAdnMin()">Continuar →</button>
+  </div>
+  <div id="hedge-exit-result"></div>
+</div>
+
+<div class="step" id="s6">
+  <div class="step-title"><span class="step-num">6</span>Inercia de Sectores — ¿Qué tienes y cuál es el nuevo Top 2?</div>
+  <div class="nota">Capital por sector: <strong id="lbl-cap-sector">45.000 €</strong></div>
+  <div style="margin-top:16px">
+    <div style="font-size:13px;font-weight:700;color:var(--blue);margin-bottom:8px">🇺🇸 Sectores USA</div>
+    <table><thead><tr><th>#</th><th>Sector ACTUAL</th><th style="text-align:center">→</th><th>Nuevo Top</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><select id="usa-act-1"></select></td><td style="text-align:center;color:#aaa">→</td><td><select id="usa-new-1"></select></td></tr>
+      <tr><td>2</td><td><select id="usa-act-2"></select></td><td style="text-align:center;color:#aaa">→</td><td><select id="usa-new-2"></select></td></tr>
+    </tbody></table>
+  </div>
+  <div style="margin-top:16px">
+    <div style="font-size:13px;font-weight:700;color:var(--blue);margin-bottom:8px">🇪🇺 Sectores EU</div>
+    <table><thead><tr><th>#</th><th>Sector ACTUAL</th><th style="text-align:center">→</th><th>Nuevo Top</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><select id="eu-act-1"></select></td><td style="text-align:center;color:#aaa">→</td><td><select id="eu-new-1"></select></td></tr>
+      <tr><td>2</td><td><select id="eu-act-2"></select></td><td style="text-align:center;color:#aaa">→</td><td><select id="eu-new-2"></select></td></tr>
+    </tbody></table>
+  </div>
+  <button class="btn btn-primary" style="margin-top:14px;width:100%;padding:13px" onclick="onInercia()">Ver resumen completo →</button>
+  <div id="inercia-result"></div>
+</div>
+
+<div class="resumen-box" id="resumen">
+  <h2>📋 ÓRDENES DEL MES</h2>
+  <div id="ordenes-lista"></div>
+  <button class="reset-btn" onclick="resetWizard()">↺ Empezar de nuevo</button>
+</div>
+
+<div id="calc-section-ib" style="display:none;background:#fff;border-radius:10px;border:1px solid #dde4ef;padding:22px 24px;margin-top:16px;box-shadow:0 2px 8px rgba(0,0,0,.06)">
+  <div style="font-size:16px;font-weight:700;color:var(--blue);margin-bottom:8px">🔢 Calcular nº de acciones y contratos</div>
+  <div class="nota">Introduce los precios actuales. Los cálculos se actualizan al escribir. Campos opcionales — deja en blanco los que no necesites.</div>
+  <div id="calc-fields-ib" style="margin-top:12px"></div>
+</div>
+<!-- ── Verificar cartera IB ── -->
+<div style="border-top:2px solid #dde4ef;margin:28px 0 20px;padding-top:10px">
+  <div style="font-size:16px;font-weight:700;color:var(--blue);margin-bottom:4px">📊 Verificar posiciones actuales en IB</div>
+  <div class="hint">Introduce tus posiciones actuales para ver exactamente qué comprar y vender.</div>
+</div>
+
+
+<div class="c-section">
+  <div class="c-section-title"><span class="step-num">📊</span>Verificar cartera IB — comparar con el sistema</div>
+  <div class="nota">Introduce el <strong>NAV actual</strong> de tu cuenta en IB (valor total: posiciones + efectivo). El sistema calculará exactamente qué debes comprar y vender para cuadrar con el Santo Grial.</div>
+
+  <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:16px;align-items:flex-end">
+    <div>
+      <label>NAV actual de la cuenta (€)</label>
+      <input type="number" id="c-nav" value="1000000" min="10000" step="1000" style="width:190px;padding:10px 12px;border:2px solid #ccc;border-radius:6px;font-size:15px;outline:none">
+      <div class="hint">En IB: Cuenta → Ver valor neto de la cartera</div>
+    </div>
+    <div>
+      <label>Mes actual</label>
+      <select id="c-mes" style="width:155px;padding:9px 10px;border:2px solid #ccc;border-radius:6px;font-size:13px;background:#fff;outline:none">
+        <option value="1">Enero</option><option value="2">Febrero</option>
+        <option value="3">Marzo</option><option value="4">Abril</option>
+        <option value="5">Mayo</option><option value="6">Junio</option>
+        <option value="7">Julio</option><option value="8">Agosto</option>
+        <option value="9">Septiembre</option><option value="10">Octubre</option>
+        <option value="11">Noviembre</option><option value="12">Diciembre</option>
+      </select>
+    </div>
+    <div>
+      <label>ADN ($NYA50R) actual</label>
+      <input type="number" id="c-adn" min="0" max="100" step="1" placeholder="ej: 35" style="width:110px;padding:10px 12px;border:2px solid #ccc;border-radius:6px;font-size:15px;outline:none">
+    </div>
+  </div>
+
+  <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:14px">
+    <div>
+      <label style="display:block;font-size:12px;color:#666;font-weight:600;margin-bottom:6px">GEMINI (Coppock SPY mensual)</label>
+      <div class="btn-group">
+        <button class="btn btn-yes" id="c-gem-on" onclick="cSetGemini(true)">📈 Risk-ON</button>
+        <button class="btn btn-no" id="c-gem-off" onclick="cSetGemini(false)">📉 Risk-OFF</button>
+      </div>
+    </div>
+    <div>
+      <label style="display:block;font-size:12px;color:#666;font-weight:600;margin-bottom:6px">Coppock M6E (EUR/USD mensual)</label>
+      <div class="btn-group">
+        <button class="btn btn-yes" id="c-m6e-pos" onclick="cSetM6e(true)">✅ Encima de cero</button>
+        <button class="btn btn-no" id="c-m6e-neg" onclick="cSetM6e(false)">🛑 Debajo de cero</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="font-size:13px;font-weight:700;color:var(--blue);margin-top:18px;margin-bottom:6px">Tus posiciones actuales (ETFs)</div>
+  <div class="nota" style="margin-bottom:10px">Los tickers son editables — cámbialos si usas otro instrumento. Pon <strong>0</strong> en acciones si no tienes esa posición. El precio permite calcular el número exacto de acciones a operar.</div>
+
+  <table class="c-table">
+    <thead>
+      <tr><th>Bloque</th><th>Ticker ETF</th><th>Acciones que tienes</th><th>Precio actual (€)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Estacional</strong></td>
+        <td><input type="text" class="c-ticker" data-block="est" value="SXRV"></td>
+        <td><input type="number" class="c-shares" data-block="est" value="0" min="0"></td>
+        <td><input type="number" class="c-price" data-block="est" value="0" min="0" step="0.001"></td>
+      </tr>
+      <tr><td>Inercia USA #1</td>
+        <td><input type="text" class="c-ticker" data-block="usa1" value="IUES"></td>
+        <td><input type="number" class="c-shares" data-block="usa1" value="3675" min="0"></td>
+        <td><input type="number" class="c-price" data-block="usa1" value="12.354" min="0" step="0.001"></td>
+      </tr>
+      <tr><td>Inercia USA #2</td>
+        <td><input type="text" class="c-ticker" data-block="usa2" value="QDVE"></td>
+        <td><input type="number" class="c-shares" data-block="usa2" value="1176" min="0"></td>
+        <td><input type="number" class="c-price" data-block="usa2" value="42.225" min="0" step="0.001"></td>
+      </tr>
+      <tr><td>Inercia EU #1</td>
+        <td><input type="text" class="c-ticker" data-block="eu1" value="EXV7"></td>
+        <td><input type="number" class="c-shares" data-block="eu1" value="126" min="0"></td>
+        <td><input type="number" class="c-price" data-block="eu1" value="118.80" min="0" step="0.001"></td>
+      </tr>
+      <tr><td>Inercia EU #2</td>
+        <td><input type="text" class="c-ticker" data-block="eu2" value="EXW3"></td>
+        <td><input type="number" class="c-shares" data-block="eu2" value="289" min="0"></td>
+        <td><input type="number" class="c-price" data-block="eu2" value="51.84" min="0" step="0.001"></td>
+      </tr>
+      <tr><td>GEMINI — VECA</td>
+        <td><input type="text" class="c-ticker" data-block="veca" value="VECA"></td>
+        <td><input type="number" class="c-shares" data-block="veca" value="0" min="0"></td>
+        <td><input type="number" class="c-price" data-block="veca" value="0" min="0" step="0.001"></td>
+      </tr>
+      <tr><td>GEMINI — ERNA</td>
+        <td><input type="text" class="c-ticker" data-block="erna" value="ERNA"></td>
+        <td><input type="number" class="c-shares" data-block="erna" value="85239" min="0"></td>
+        <td><input type="number" class="c-price" data-block="erna" value="6.353" min="0" step="0.001"></td>
+      </tr>
+      <tr><td>GEMINI — ERNX</td>
+        <td><input type="text" class="c-ticker" data-block="ernx" value="ERNX"></td>
+        <td><input type="number" class="c-shares" data-block="ernx" value="11410" min="0"></td>
+        <td><input type="number" class="c-price" data-block="ernx" value="5.5642" min="0" step="0.001"></td>
+      </tr>
+      <tr><td><em>Posición extra 1</em></td>
+        <td><input type="text" class="c-ticker" data-block="other1" value=""></td>
+        <td><input type="number" class="c-shares" data-block="other1" value="0" min="0"></td>
+        <td><input type="number" class="c-price" data-block="other1" value="0" min="0" step="0.001"></td>
+      </tr>
+      <tr><td><em>Posición extra 2</em></td>
+        <td><input type="text" class="c-ticker" data-block="other2" value=""></td>
+        <td><input type="number" class="c-shares" data-block="other2" value="0" min="0"></td>
+        <td><input type="number" class="c-price" data-block="other2" value="0" min="0" step="0.001"></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <button class="btn btn-primary" onclick="calcularCartera()" style="margin-top:18px;width:100%;padding:14px;font-size:15px">
+    Calcular qué tengo que comprar y vender →
+  </button>
+</div>
+
+<div class="resumen-box" id="c-resultado">
+  <h2>📋 ÓRDENES DE REBALANCEO</h2>
+  <div id="c-ordenes-lista"></div>
+  <div id="c-cash-info" style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.25);font-size:13px"></div>
+  <button class="reset-btn" onclick="resetCartera()">↺ Nueva verificación</button>
+</div>
+
+</div><!-- /mode-ib -->
+
+</div><!-- /wizard -->
+
+<script>
+// ═══ DATOS ═══
+const CAL={
+  1:[{a:'SGLD',p:100,t:'Oro'}],
+  2:[{a:'ERNA',p:51,t:'Bonos IG EUR'},{a:'IB01',p:49,t:'Treasury 0-1yr'}],
+  3:[{a:'SGLD',p:52,t:'Oro'},{a:'QQQ',p:48,t:'NASDAQ 100'}],
+  4:[{a:'SPY',p:100,t:'S&P 500'}],
+  5:[{a:'QQQ',p:100,t:'NASDAQ 100'}],
+  6:[{a:'IB01',p:100,t:'Treasury 0-1yr'}],
+  7:[{a:'QQQ',p:100,t:'NASDAQ 100'}],
+  8:[{a:'ERNA',p:100,t:'Bonos IG EUR'}],
+  9:[{a:'IB01',p:51,t:'Treasury 0-1yr'},{a:'ERNA',p:49,t:'Bonos IG EUR'}],
+  10:[{a:'QQQ',p:52,t:'NASDAQ 100'},{a:'SGLD',p:48,t:'Oro'}],
+  11:[{a:'SPY',p:100,t:'S&P 500'}],
+  12:[{a:'SPY',p:100,t:'S&P 500'}]
+};
+const EXP={
+  1:[0,12],2:[0,12],3:[34.6,12],4:[0,84],5:[72,12],6:[0,12],
+  7:[72,12],8:[0,12],9:[0,12],10:[37.4,12],11:[0,84],12:[0,84]
+};
+const EU_PCT=9;
+const MESES=['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const USA_SEC=[
+  {v:'XLK',l:'XLK — Tecnología'},{v:'XLV',l:'XLV — Salud'},
+  {v:'XLF',l:'XLF — Financiero'},{v:'XLY',l:'XLY — Consumo discrecional'},
+  {v:'XLP',l:'XLP — Consumo básico'},{v:'XLE',l:'XLE — Energía'},
+  {v:'XLI',l:'XLI — Industrial'},{v:'XLB',l:'XLB — Materiales'},
+  {v:'XLU',l:'XLU — Utilities'},{v:'XLRE',l:'XLRE — Real Estate'}
+];
+const EU_SEC=[
+  {v:'SX8P',l:'Automóviles'},{v:'SX7P',l:'Banca'},
+  {v:'SXPP',l:'Recursos básicos'},{v:'SX4P',l:'Químicas'},
+  {v:'SXOP',l:'Construcción'},{v:'SXFP',l:'Servicios financieros'},
+  {v:'SX3P',l:'Alimentos y bebidas'},{v:'SXNP',l:'Industrial'},
+  {v:'SXIP',l:'Seguros'},{v:'SXMP',l:'Medios'},
+  {v:'SXQP',l:'Consumo personal'},{v:'SXTP',l:'Viajes y ocio'},
+  {v:'SXEP',l:'Petróleo y Gas'},{v:'SX86P',l:'Tecnología EU'},
+  {v:'SXKP',l:'Telecomunicaciones'},{v:'SX6P',l:'Utilities EU'},{v:'SXDP',l:'Salud EU'}
+];
+
+// ═══ ESTADO WIZARD ═══
+const S={capital:1000000,mes:null,anio:null,m6ePos:null,geminiOn:null,spyStop:false,adn:null,hedgePrev:null,adnMin:null,inerciaVender:[],inerciaComprar:[],hadAdn40:false};
+
+// ═══ ESTADO RÁPIDO ═══
+const Q={mes:null,capital:1000000,m6e:null,gemini:null,spyStop:false,adn:null,hedge:null,adnMin:null};
+
+window.onload=function(){
+  const now=new Date();
+  document.getElementById('fecha-header').textContent=now.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const sa=document.getElementById('sel-anio');
+  for(let y=2025;y<=2032;y++){const o=document.createElement('option');o.value=y;o.textContent=y;if(y===now.getFullYear())o.selected=true;sa.appendChild(o);}
+  const dsa=document.getElementById('dw-sel-anio');
+  for(let y=2025;y<=2032;y++){const o=document.createElement('option');o.value=y;o.textContent=y;if(y===now.getFullYear())o.selected=true;dsa.appendChild(o);}
+  const m=now.getMonth()+1;
+  document.getElementById('sel-mes').value=m;
+  document.getElementById('c-mes').value=m;
+  document.getElementById('d-mes').value=m;
+  document.getElementById('dw-sel-mes').value=m;
+  buildDropdowns();
+};
+
+function buildDropdowns(){
+  ['usa-act-1','usa-act-2','usa-new-1','usa-new-2','dw-usa-act-1','dw-usa-act-2','dw-usa-new-1','dw-usa-new-2'].forEach(id=>{
+    const s=document.getElementById(id);if(!s)return;
+    s.innerHTML='<option value="">— Seleccionar —</option>'+USA_SEC.map(x=>`<option value="${x.v}">${x.l}</option>`).join('');
+  });
+  ['eu-act-1','eu-act-2','eu-new-1','eu-new-2','dw-eu-act-1','dw-eu-act-2','dw-eu-new-1','dw-eu-new-2'].forEach(id=>{
+    const s=document.getElementById(id);if(!s)return;
+    s.innerHTML='<option value="">— Seleccionar —</option>'+EU_SEC.map(x=>`<option value="${x.v}">${x.l}</option>`).join('');
+  });
+}
+
+// ═══ TABS ═══
+function setTab(mode){
+  document.getElementById('mode-degiro').style.display=mode==='degiro'?'block':'none';
+  document.getElementById('mode-ib').style.display=mode==='ib'?'block':'none';
+  document.getElementById('tab-degiro').classList.toggle('tab-active',mode==='degiro');
+  document.getElementById('tab-ib').classList.toggle('tab-active',mode==='ib');
+}
+
+// ═══ HELPERS ═══
+function progreso(n){document.getElementById('prog').style.width=(n/9*100)+'%';}
+function mostrar(id){const el=document.getElementById(id);el.classList.add('visible');setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'nearest'}),50);}
+function fmt(n){return Math.round(n).toLocaleString('es-ES');}
+function sel(a,b,v){document.getElementById(a).classList.toggle('selected',v);document.getElementById(b).classList.toggle('selected',!v);}
+function secLabel(v,list){return(list.find(x=>x.v===v)||{l:v}).l;}
+
+// ═══ MOTOR DE ÓRDENES (compartido) ═══
+function generarOrdenesHTML(mes,capital,adn,geminiOn,m6ePos,hedgePrev,adnMin,spyStop,iVender,iComprar,hadAdn40){
+  hadAdn40=hadAdn40||false;
+  const[nqPct,esPct]=EXP[mes];
+  const items=CAL[mes];
+  const prevItems=CAL[mes===1?12:mes-1];
+  const cs=capital*0.045;
+  const nqNot=nqPct>0?capital*nqPct/100:0;
+  const esNot=capital*esPct/100;
+  const fsNot=capital*EU_PCT/100;
+  const hedgeMargen=(nqNot+esNot+fsNot)*0.10;
+  const fc=n=>Math.round(n).toLocaleString('es-ES');
+  let o=[];
+
+  // Estacional
+  o.push({t:'sep',l:`Bloque Estacional — ${fc(capital*0.72)} €`});
+  prevItems.forEach(i=>o.push({t:'venta',l:`VENDER ${i.a}`,imp:`${i.p}% = ${fc(capital*0.72*i.p/100)} €`}));
+  items.forEach(i=>o.push({t:'compra',l:`COMPRAR ${i.a} — ${i.t}`,imp:`${i.p}% = ${fc(capital*0.72*i.p/100)} €`}));
+  if(m6ePos===false){
+    const stopLines=items.map(i=>{const imp=capital*0.72*i.p/100;return `${i.a}: stop 6,5% → pérdida máx. ${fc(imp*0.065)} €`;}).join(' | ');
+    o.push({t:'alerta',l:`⚠️ Coppock M6E negativo → stop 6,5% sobre posición estacional: ${stopLines}`,imp:''});
+  }
+
+  // GEMINI
+  o.push({t:'sep',l:`Bloque GEMINI — ${fc(capital*0.10)} €`});
+  const gemFinal=geminiOn&&!spyStop;
+  if(gemFinal){
+    o.push({t:'compra',l:'RISK-ON: Top 1 sector USA',imp:fc(capital*0.015)+' €'});
+    o.push({t:'compra',l:'RISK-ON: Top 2 sector USA',imp:fc(capital*0.015)+' €'});
+    o.push({t:'compra',l:'RISK-ON: Top 3 sector USA',imp:fc(capital*0.015)+' €'});
+    o.push({t:'compra',l:'RISK-ON: Top 4 sector USA',imp:fc(capital*0.015)+' €'});
+    o.push({t:'compra',l:'RISK-ON: VECA',imp:fc(capital*0.025)+' €'});
+    o.push({t:'compra',l:'RISK-ON: ERNA',imp:fc(capital*0.015)+' €'});
+  } else {
+    if(spyStop) o.push({t:'alerta',l:'⚠️ SPY cayó >8% → Risk-OFF forzado',imp:''});
+    o.push({t:'compra',l:'RISK-OFF: ERNX',imp:fc(capital*0.06)+' €'});
+    o.push({t:'mantener',l:'RISK-OFF: VECA',imp:fc(capital*0.025)+' €'});
+    o.push({t:'mantener',l:'RISK-OFF: ERNA',imp:fc(capital*0.015)+' €'});
+  }
+
+  // Inercia
+  o.push({t:'sep',l:`Bloque Inercia — ${fc(capital*0.18)} € → ${fc(cs)} € / sector`});
+  const noSectors=(!iVender||iVender.length===0)&&(!iComprar||iComprar.length===0);
+  if(noSectors){
+    o.push({t:'mantener',l:'Verificar ranking IA mensual — mantener Top 2 USA + Top 2 EU',imp:`${fc(cs)} € c/u`});
+  } else {
+    (iVender||[]).forEach(s=>o.push({t:'venta',l:`VENDER ${secLabel(s,[...USA_SEC,...EU_SEC])}`,imp:fc(cs)+' €'}));
+    (iComprar||[]).forEach(s=>o.push({t:'compra',l:`COMPRAR ${secLabel(s,[...USA_SEC,...EU_SEC])}`,imp:fc(cs)+' €'}));
+  }
+
+  // Hedge ADN<80
+  o.push({t:'sep',l:'Cobertura corta ADN<80 (futuros de índices)'});
+  if(!hedgePrev){
+    if(adn<80){
+      if(nqPct>0) o.push({t:'short',l:'ABRIR Short NQ — E-mini NASDAQ-100 (CME)',imp:`${nqPct}% = ${fc(nqNot)} € nocional`});
+      else o.push({t:'mantener',l:'Short NQ: 0 € — sin QQQ estacional este mes',imp:''});
+      o.push({t:'short',l:'ABRIR Short ES — E-mini S&P 500 (CME)',imp:`${esPct}% = ${fc(esNot)} € nocional`});
+      o.push({t:'short',l:'ABRIR Short FESX — Euro Stoxx 50 mini (EUREX)',imp:`${EU_PCT}% = ${fc(fsNot)} € nocional`});
+      o.push({t:'alerta',l:'Margen IBKR requerido (~10% del nocional total)',imp:`${fc(hedgeMargen)} €`});
+    } else {
+      o.push({t:'mantener',l:'Sin cobertura — ADN ≥ 80, mercado en zona normal',imp:''});
+    }
+  } else {
+    const adnMinV=adnMin!=null?adnMin:100;
+    const cerrar=adn>80||(adnMinV<50&&adn>=50)||(adnMinV<20&&adn>=20);
+    if(cerrar){
+      let motivo=adn>80?'Salida 1: ADN volvió >80':(adnMinV<20&&adn>=20?'Salida 3: ADN cruzó arriba el 20':'Salida 2: ADN cruzó arriba el 50');
+      o.push({t:'cubrir',l:`CERRAR Short NQ — ${motivo}`,imp:'Comprar para cubrir'});
+      o.push({t:'cubrir',l:'CERRAR Short ES',imp:'Comprar para cubrir'});
+      o.push({t:'cubrir',l:'CERRAR Short FESX',imp:'Comprar para cubrir'});
+    } else {
+      if(nqPct>0) o.push({t:'short',l:'MANTENER Short NQ',imp:`${nqPct}% = ${fc(nqNot)} € nocional`});
+      o.push({t:'short',l:'MANTENER Short ES',imp:`${esPct}% = ${fc(esNot)} € nocional`});
+      o.push({t:'short',l:'MANTENER Short FESX',imp:`${EU_PCT}% = ${fc(fsNot)} € nocional`});
+      o.push({t:'alerta',l:'Ninguna condición de salida cumplida — mantener posición',imp:`Margen: ${fc(hedgeMargen)} €`});
+    }
+  }
+
+  // ADN < 40 cierres parciales — Gap 3 fix: importes calculados
+  if(adn<40){
+    o.push({t:'sep',l:'Cierres parciales ADN<40 (overlay anti-crash)'});
+    items.forEach(i=>{
+      if(i.a==='SGLD'){
+        o.push({t:'venta',l:`Cerrar 25% de ${i.a} estacional`,imp:`${fc(capital*0.72*i.p/100*0.25)} €`});
+      } else {
+        o.push({t:'venta',l:`Cerrar 70% de ${i.a} estacional`,imp:`${fc(capital*0.72*i.p/100*0.70)} €`});
+      }
+    });
+    o.push({t:'venta',l:'Cerrar 70% Inercia EU — cada sector',imp:`${fc(capital*0.045*0.70)} € c/u`});
+    o.push({t:'venta',l:'Cerrar 25% Inercia USA — cada sector',imp:`${fc(capital*0.045*0.25)} € c/u`});
+    o.push({t:'alerta',l:'⟳ Recomprar todo cuando ADN vuelva a subir por encima de 40',imp:''});
+  }
+  // Gap 4: Recompra posiciones parciales cuando ADN cruza arriba el 40
+  if(hadAdn40&&adn>=40){
+    o.push({t:'sep',l:'⟳ Recompra parciales — ADN cruzó arriba el 40'});
+    items.forEach(i=>{
+      if(i.a==='SGLD'){
+        o.push({t:'compra',l:`RECOMPRAR 25% de ${i.a} estacional`,imp:`${fc(capital*0.72*i.p/100*0.25)} €`});
+      } else {
+        o.push({t:'compra',l:`RECOMPRAR 70% de ${i.a} estacional`,imp:`${fc(capital*0.72*i.p/100*0.70)} €`});
+      }
+    });
+    o.push({t:'compra',l:'RECOMPRAR 70% Inercia EU — cada sector',imp:`${fc(capital*0.045*0.70)} € c/u`});
+    o.push({t:'compra',l:'RECOMPRAR 25% Inercia USA — cada sector',imp:`${fc(capital*0.045*0.25)} € c/u`});
+  }
+
+  const clsMap={compra:'orden-compra',venta:'orden-venta',short:'orden-short',cubrir:'orden-cubrir',mantener:'orden-mantener',alerta:'orden-alerta'};
+  let html='';
+  o.forEach(x=>{
+    if(x.t==='sep') html+=`<div class="orden-sep">${x.l}</div>`;
+    else html+=`<div class="orden ${clsMap[x.t]||''}"><span>${x.l}</span>${x.imp?`<span class="orden-imp">${x.imp}</span>`:''}</div>`;
+  });
+  return html;
+}
+
+// ═══ WIZARD — PASOS ═══
+function onCapital(){
+  const v=+document.getElementById('capital').value;
+  if(!v||v<10000){document.getElementById('capital-result').innerHTML='<div class="result result-alert">Capital mínimo: 10.000 €</div>';return;}
+  S.capital=v;
+  document.getElementById('lbl-cap-sector').textContent=fmt(v*0.045)+' €';
+  document.getElementById('capital-result').innerHTML=`<div class="result result-ok">Capital: <strong>${fmt(v)} €</strong> → Estacional (72%): <strong>${fmt(v*0.72)} €</strong> · Inercia (18%): <strong>${fmt(v*0.18)} €</strong> · GEMINI (10%): <strong>${fmt(v*0.10)} €</strong></div>`;
+  progreso(1); setTimeout(()=>mostrar('s1'),300);
+}
+
+function onMes(){
+  S.mes=+document.getElementById('sel-mes').value;
+  S.anio=+document.getElementById('sel-anio').value;
+  const items=CAL[S.mes], prev=S.mes===1?12:S.mes-1, prevItems=CAL[prev];
+  document.getElementById('mes-result').innerHTML=`
+    <div class="mes-box"><div>ESTACIONAL — ${MESES[S.mes]} ${S.anio}</div>
+    <div class="activos">${items.map(i=>`<strong>${i.a}</strong> ${i.p}%`).join(' + ')}</div>
+    <div class="detalle">${items.map(i=>i.t).join(' + ')}</div></div>
+    <div class="result result-info" style="margin-top:8px">Mes anterior (${MESES[prev]}): vender <strong>${prevItems.map(i=>i.a).join(' + ')}</strong></div>`;
+  progreso(2); setTimeout(()=>mostrar('s2'),300);
+}
+
+function onM6e(pos){
+  S.m6ePos=pos; sel('b-m6e-pos','b-m6e-neg',pos);
+  if(pos){
+    document.getElementById('m6e-result').innerHTML='<div class="result result-ok">✅ Coppock M6E positivo — mantener posición estacional completa, sin stop.</div>';
+  } else {
+    const items=CAL[S.mes||1], estTotal=S.capital*0.72;
+    const lines=items.map(i=>`• ${i.a}: stop 6,5% sobre ${fmt(estTotal*i.p/100)} € → pérdida máx. <strong>${fmt(estTotal*i.p/100*0.065)} €</strong>`).join('<br>');
+    document.getElementById('m6e-result').innerHTML=`<div class="result result-alert">🛑 Coppock M6E negativo → <strong>Stop 6,5%</strong> sobre cada posición estacional:<br>${lines}<br><br>El mes siguiente reentrar en el activo del nuevo mes (no esperar a que vuelva a positivo).</div>`;
+  }
+  progreso(3); setTimeout(()=>mostrar('s3'),300);
+}
+
+function onGemini(on){
+  S.geminiOn=on; sel('b-gem-on','b-gem-off',on);
+  if(on){
+    document.getElementById('gem-result').innerHTML=`<div class="result result-ok">📈 RISK-ON — 4 sectores USA (${fmt(S.capital*0.015)} € c/u) + VECA (${fmt(S.capital*0.025)} €) + ERNA (${fmt(S.capital*0.015)} €)</div>`;
+    progreso(3.5); setTimeout(()=>mostrar('s3b'),300);
+  } else {
+    document.getElementById('gem-result').innerHTML=`<div class="result result-warn">📉 RISK-OFF — ERNX (${fmt(S.capital*0.06)} €) + VECA (${fmt(S.capital*0.025)} €) + ERNA (${fmt(S.capital*0.015)} €)</div>`;
+    progreso(4); setTimeout(()=>mostrar('s4'),300);
+  }
+}
+
+function onSpyStop(si){
+  S.spyStop=si; sel('b-spy-si','b-spy-no',si);
+  if(si) S.geminiOn=false;
+  document.getElementById('spy-result').innerHTML=si
+    ?`<div class="result result-alert">🚨 SPY cayó >8% → Forzar RISK-OFF: ERNX ${fmt(S.capital*0.06)} € + VECA ${fmt(S.capital*0.025)} € + ERNA ${fmt(S.capital*0.015)} €</div>`
+    :'<div class="result result-ok">✅ SPY dentro del rango. GEMINI permanece en Risk-ON.</div>';
+  progreso(4); setTimeout(()=>mostrar('s4'),300);
+}
+
+function onAdn(){
+  const v=document.getElementById('adn-val').value;
+  if(v===''||isNaN(+v)||+v<0||+v>100){document.getElementById('adn-result').innerHTML='<div class="result result-alert">Introduce un valor entre 0 y 100.</div>';return;}
+  S.adn=+v;
+  const adn=S.adn, mes=S.mes||1, [nqPct,esPct]=EXP[mes];
+  let zona,cls;
+  if(adn>=80){zona='Normal (≥ 80) — Sin cobertura';cls='result-ok';}
+  else if(adn>=40){zona='Estrés (40–80) — Abrir cortos en futuros';cls='result-warn';}
+  else{zona='Pánico (< 40) — Cortos + cierres parciales en ETFs';cls='result-alert';}
+  let extra='';
+  if(adn<80){
+    const nqNot=nqPct>0?S.capital*nqPct/100:0, esNot=S.capital*esPct/100, fsNot=S.capital*EU_PCT/100;
+    extra=`<div class="result result-short" style="margin-top:8px">📌 ADN < 80 → Abrir cortos simultáneamente:<br>${nqPct>0?`• Short <strong>NQ</strong>: ${nqPct}% = <strong>${fmt(nqNot)} €</strong> nocional<br>`:'• Short NQ: 0 € (sin QQQ este mes)<br>'}• Short <strong>ES</strong>: ${esPct}% = <strong>${fmt(esNot)} €</strong> nocional<br>• Short <strong>FESX</strong>: ${EU_PCT}% = <strong>${fmt(fsNot)} €</strong> nocional<br>💰 Margen IBKR (~10%): <strong>${fmt((nqNot+esNot+fsNot)*0.10)} €</strong></div>`;
+  }
+  if(adn<40) extra+=`<div class="result result-alert" style="margin-top:8px">🚨 ADN < 40 → Además cerrar parcialmente ETFs: QQQ/SPY 70% · Inercia EU 70% · Inercia USA 25% · SGLD 25%</div>`;
+  document.getElementById('adn-result').innerHTML=`<div class="result ${cls}" style="margin-top:10px">ADN = <strong>${adn}</strong> — ${zona}<div class="adn-bar" style="margin-top:8px"><div class="adn-pin" style="left:${adn}%"></div></div><div class="adn-labels"><span>0 (pánico)</span><span>20</span><span>40</span><span>80</span><span>100</span></div></div>${extra}`;
+  progreso(5); setTimeout(()=>mostrar(adn>=40?'s4b':'s5'),300);
+}
+
+function onHadAdn40(tenia){
+  S.hadAdn40=tenia;
+  document.getElementById('b-adn40-si').classList.toggle('selected',tenia);
+  document.getElementById('b-adn40-no').classList.toggle('selected',!tenia);
+  document.getElementById('adn40-result').innerHTML=tenia
+    ?'<div class="result result-warn">⟳ Hay recompras pendientes — aparecerán en el resumen final.</div>'
+    :'<div class="result result-ok">✅ Sin cierres parciales previos — posiciones completas.</div>';
+  progreso(5.2); setTimeout(()=>mostrar('s5'),300);
+}
+
+function onHedgePrev(activo){
+  S.hedgePrev=activo; sel('b-hedge-si','b-hedge-no',activo);
+  const adn=S.adn, mes=S.mes||1, [nqPct,esPct]=EXP[mes];
+  if(!activo){
+    if(adn<80){
+      const nqNot=nqPct>0?S.capital*nqPct/100:0, esNot=S.capital*esPct/100, fsNot=S.capital*EU_PCT/100;
+      document.getElementById('hedge-result').innerHTML=`<div class="result result-short">🚨 ADN = ${adn} < 80 — No tenías cortos → <strong>ABRIR AHORA:</strong><br>${nqPct>0?`• Short NQ: ${nqPct}% = <strong>${fmt(nqNot)} €</strong><br>`:'• Short NQ: 0 € (sin QQQ este mes)<br>'}• Short ES: ${esPct}% = <strong>${fmt(esNot)} €</strong><br>• Short FESX: ${EU_PCT}% = <strong>${fmt(fsNot)} €</strong><br>💰 Margen: <strong>${fmt((nqNot+esNot+fsNot)*0.10)} €</strong></div>`;
+    } else {
+      document.getElementById('hedge-result').innerHTML=`<div class="result result-ok">✅ ADN = ${adn} ≥ 80 — Sin cobertura necesaria. Mercado normal.</div>`;
+    }
+    progreso(6); setTimeout(()=>mostrar('s6'),300);
+  } else {
+    document.getElementById('hedge-result').innerHTML='<div class="result result-info">Tienes cortos. Necesito el ADN mínimo para evaluar si hay señal de cierre.</div>';
+    progreso(5.5); setTimeout(()=>mostrar('s5b'),300);
+  }
+}
+
+function onAdnMin(){
+  const v=document.getElementById('adn-min-val').value;
+  if(v===''||isNaN(+v)||+v<0||+v>100){document.getElementById('hedge-exit-result').innerHTML='<div class="result result-alert">Introduce un valor entre 0 y 100.</div>';return;}
+  S.adnMin=+v;
+  const adn=S.adn, adnMin=S.adnMin, mes=S.mes||1, [nqPct,esPct]=EXP[mes];
+  let html='';
+  if(adn>80) html='<div class="result result-ok">✅ <strong>Salida 1:</strong> ADN > 80 → Cerrar todos los cortos (NQ, ES, FESX).</div>';
+  else if(adnMin<50&&adn>=50) html=`<div class="result result-ok">✅ <strong>Salida 2:</strong> ADN cruzó arriba el 50 (mín fue ${adnMin}) → Cerrar cortos anticipadamente.</div>`;
+  else if(adnMin<20&&adn>=20) html=`<div class="result result-ok">✅ <strong>Salida 3:</strong> ADN cruzó arriba el 20 (mín fue ${adnMin}) → Cerrar cortos (pánico extremo).</div>`;
+  else{
+    const nqNot2=nqPct>0?S.capital*nqPct/100:0, esNot2=S.capital*esPct/100, fsNot2=S.capital*EU_PCT/100;
+    html=`<div class="result result-short">⚠️ <strong>Ninguna condición de salida cumplida</strong> → Mantener cortos.<br>ADN actual: ${adn} · ADN mínimo: ${adnMin}<br>${nqPct>0?`• Short NQ: ${fmt(nqNot2)} €<br>`:''}• Short ES: ${fmt(esNot2)} €<br>• Short FESX: ${fmt(fsNot2)} €</div>`;
+  }
+  document.getElementById('hedge-exit-result').innerHTML=html;
+  progreso(6); setTimeout(()=>mostrar('s6'),300);
+}
+
+function onInercia(){
+  const usaAct=[document.getElementById('usa-act-1').value,document.getElementById('usa-act-2').value];
+  const usaNew=[document.getElementById('usa-new-1').value,document.getElementById('usa-new-2').value];
+  const euAct=[document.getElementById('eu-act-1').value,document.getElementById('eu-act-2').value];
+  const euNew=[document.getElementById('eu-new-1').value,document.getElementById('eu-new-2').value];
+  const cs=S.capital*0.045;
+  const usaV=usaAct.filter(s=>s&&!usaNew.includes(s)), usaC=usaNew.filter(s=>s&&!usaAct.includes(s));
+  const euV=euAct.filter(s=>s&&!euNew.includes(s)), euC=euNew.filter(s=>s&&!euAct.includes(s));
+  S.inerciaVender=[...usaV,...euV]; S.inerciaComprar=[...usaC,...euC];
+  let html='';
+  if(usaV.length===0&&euV.length===0){
+    html='<div class="result result-ok" style="margin-top:10px">✅ Sin cambios en Inercia — mantener las 4 posiciones actuales.</div>';
+  } else {
+    html='<div class="result result-warn" style="margin-top:10px"><strong>Cambios detectados:</strong><br>';
+    usaV.forEach(s=>{html+=`❌ VENDER ${secLabel(s,USA_SEC)}: <strong>${fmt(cs)} €</strong><br>`;});
+    euV.forEach(s=>{html+=`❌ VENDER ${secLabel(s,EU_SEC)}: <strong>${fmt(cs)} €</strong><br>`;});
+    usaC.forEach(s=>{html+=`✅ COMPRAR ${secLabel(s,USA_SEC)}: <strong>${fmt(cs)} €</strong><br>`;});
+    euC.forEach(s=>{html+=`✅ COMPRAR ${secLabel(s,EU_SEC)}: <strong>${fmt(cs)} €</strong><br>`;});
+    html+='</div>';
+  }
+  document.getElementById('inercia-result').innerHTML=html;
+  progreso(9); setTimeout(()=>mostrarResumen(),400);
+}
+
+function mostrarResumen(){
+  const html=generarOrdenesHTML(S.mes||1,S.capital,S.adn||100,S.geminiOn,S.m6ePos,S.hedgePrev,S.adnMin,S.spyStop,S.inerciaVender,S.inerciaComprar,S.hadAdn40);
+  document.getElementById('ordenes-lista').innerHTML=html;
+  const res=document.getElementById('resumen');
+  res.style.display='block';
+  showCalcSection('ib');
+  setTimeout(()=>res.scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+
+function resetWizard(){
+  document.querySelectorAll('#mode-wizard .step').forEach((s,i)=>{if(i>0)s.classList.remove('visible');});
+  document.getElementById('resumen').style.display='none';
+  ['capital-result','mes-result','m6e-result','gem-result','spy-result','adn-result','adn40-result','hedge-result','hedge-exit-result','inercia-result']
+    .forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
+  document.getElementById('adn-val').value='';
+  document.getElementById('adn-min-val').value='';
+  document.querySelectorAll('.btn.selected').forEach(b=>b.classList.remove('selected'));
+  const calcIb=document.getElementById('calc-section-ib');if(calcIb)calcIb.style.display='none';
+  Object.assign(S,{capital:1000000,mes:null,anio:null,m6ePos:null,geminiOn:null,spyStop:false,adn:null,hedgePrev:null,adnMin:null,inerciaVender:[],inerciaComprar:[],hadAdn40:false});
+  progreso(0); window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ═══ PANEL DE AYUDA ADN ═══
+// ═══ MODO RÁPIDO ═══
+function qSiguiente(n){
+  document.getElementById('q'+n).classList.add('visible');
+  setTimeout(()=>document.getElementById('q'+n).scrollIntoView({behavior:'smooth',block:'nearest'}),60);
+}
+function qSet(key,val){Q[key]=val;}
+function qAdn(){
+  const v=+document.getElementById('q-adn-n').value;
+  if(isNaN(v)||v<0||v>100){alert('Introduce un valor entre 0 y 100');return;}
+  Q.adn=v;
+  qSiguiente(5);
+}
+function qMostrarResumen(){
+  Q.mes=+document.getElementById('q-sel-mes').value;
+  Q.capital=+document.getElementById('q-capital').value||1000000;
+  const adnMin=+document.getElementById('q-adnmin-n').value||null;
+  Q.adnMin=Q.hedge?adnMin:null;
+  const html=generarOrdenesHTML(Q.mes,Q.capital,Q.adn!=null?Q.adn:90,Q.gemini!=null?Q.gemini:true,Q.m6e!=null?Q.m6e:true,Q.hedge!=null?Q.hedge:false,Q.adnMin,Q.spyStop,[],[]);
+  document.getElementById('q-ordenes').innerHTML=`
+    <div style="font-size:12px;opacity:.75;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.2)">
+      ${MESES[Q.mes]} · ${Math.round(Q.capital).toLocaleString('es-ES')} € · ADN=${Q.adn!=null?Q.adn:'≥80 (asumido)'} · GEMINI=${Q.gemini===false?'Risk-OFF':'Risk-ON'} · M6E=${Q.m6e===false?'Negativo (stop)':'Positivo'} · Cortos=${Q.hedge?'Sí':'No'}
+    </div>
+    ${html}
+    <div style="margin-top:14px;padding-top:10px;border-top:1px solid rgba(255,255,255,.2);font-size:12px;opacity:.7">
+      Inercia: consulta el ranking IA mensual y rota si hay cambios (${Math.round(Q.capital*0.045).toLocaleString('es-ES')} € por sector, 2 USA + 2 EU)
+    </div>`;
+  const res=document.getElementById('q-resumen');
+  res.style.display='block';
+  setTimeout(()=>res.scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+// ═══ VERIFICAR CARTERA ═══
+const C={gemini:null,m6e:null};
+
+function cSetGemini(on){
+  C.gemini=on;
+  document.getElementById('c-gem-on').classList.toggle('selected',on);
+  document.getElementById('c-gem-off').classList.toggle('selected',!on);
+}
+
+function cSetM6e(pos){
+  C.m6e=pos;
+  document.getElementById('c-m6e-pos').classList.toggle('selected',pos);
+  document.getElementById('c-m6e-neg').classList.toggle('selected',!pos);
+}
+
+function calcularCartera(){
+  const nav=+document.getElementById('c-nav').value;
+  const mes=+document.getElementById('c-mes').value;
+  const adn=+document.getElementById('c-adn').value;
+  if(!nav||nav<1000){alert('Introduce el NAV actual de tu cuenta (valor total en €)');return;}
+  if(isNaN(adn)||adn<0||adn>100){alert('Introduce un valor de ADN entre 0 y 100');return;}
+  if(C.gemini===null){alert('Selecciona si GEMINI está en Risk-ON o Risk-OFF');return;}
+  if(C.m6e===null){alert('Selecciona si el Coppock M6E está encima o debajo de cero');return;}
+
+  const gemOn=C.gemini;
+  const estMult=adn<40?0.30:1.0;
+  const usaMult=adn<40?0.75:1.0;
+  const euMult =adn<40?0.30:1.0;
+  const gemSec =gemOn?0.015:0;
+
+  const tgt={
+    est:   nav*0.72*estMult,
+    usa1:  nav*(0.045*usaMult+gemSec),
+    usa2:  nav*(0.045*usaMult+gemSec),
+    eu1:   nav*(0.045*euMult +gemSec),
+    eu2:   nav*(0.045*euMult +gemSec),
+    veca:  nav*0.025,
+    erna:  nav*0.015,
+    ernx:  gemOn?0:nav*0.06,
+    other1:0,
+    other2:0
+  };
+
+  const blocks=['est','usa1','usa2','eu1','eu2','veca','erna','ernx','other1','other2'];
+  const labels={est:'Estacional',usa1:'Inercia USA #1',usa2:'Inercia USA #2',
+    eu1:'Inercia EU #1',eu2:'Inercia EU #2',veca:'GEMINI — VECA',
+    erna:'GEMINI — ERNA',ernx:'GEMINI — ERNX',other1:'Posición extra 1',other2:'Posición extra 2'};
+
+  const pos={};
+  blocks.forEach(b=>{
+    const ticker=(document.querySelector(`.c-ticker[data-block="${b}"]`).value||'').trim().toUpperCase();
+    const shares=+document.querySelector(`.c-shares[data-block="${b}"]`).value||0;
+    const price =+document.querySelector(`.c-price[data-block="${b}"]`).value ||0;
+    pos[b]={ticker,shares,price,cur:shares*price};
+  });
+
+  let html='';
+  let totalVentas=0,totalCompras=0;
+  const fmtN=n=>Math.round(n).toLocaleString('es-ES');
+
+  blocks.forEach(b=>{
+    const p=pos[b];
+    const target=tgt[b]||0;
+    const cur=p.cur;
+    const diff=target-cur;
+    const ticker=p.ticker||'—';
+    if(!p.ticker&&!p.shares)return;
+    const diffAbs=Math.abs(diff);
+    const sharesNum=(p.price>0&&diffAbs>5)?Math.round(diffAbs/p.price):null;
+
+    if(diffAbs<10){
+      html+=`<div class="c-res-mantener"><span>✅ <strong>${ticker}</strong> — ${labels[b]}</span><span class="c-res-imp">${fmtN(cur)} € — Mantener</span></div>`;
+    } else if(diff<0){
+      totalVentas+=diffAbs;
+      const sharesStr=sharesNum?`${sharesNum.toLocaleString('es-ES')} acciones`:'(ver acciones)';
+      const targetStr=target>0?`dejar ${fmtN(target)} €`:'cerrar posición';
+      html+=`<div class="c-res-venta"><span>🔴 <strong>VENDER ${ticker}</strong> — ${labels[b]} <small>(${targetStr})</small></span><span class="c-res-imp">Vender ${sharesStr} · libera ${fmtN(diffAbs)} €</span></div>`;
+    } else {
+      totalCompras+=diff;
+      const sharesStr=sharesNum?`${sharesNum.toLocaleString('es-ES')} acciones`:'X acc (÷ precio apertura)';
+      html+=`<div class="c-res-compra"><span>🟢 <strong>COMPRAR ${ticker}</strong> — ${labels[b]}</span><span class="c-res-imp">${sharesStr} → ${fmtN(diff)} €</span></div>`;
+    }
+  });
+
+  if(C.m6e===false){
+    html+=`<div class="c-res-alerta" style="margin-top:10px">⚠️ Coppock M6E negativo — Stop 6,5% sobre la posición estacional (${pos.est.ticker}). Si cae un 6,5% desde tu precio medio, vender toda la posición estacional.</div>`;
+  }
+  if(adn<40){
+    html+=`<div class="c-res-alerta">🚨 ADN &lt; 40 — posiciones reducidas por protección anti-crash. El efectivo resultante (~${fmtN(nav*0.589)} €) permanece en cuenta hasta que ADN supere 40.</div>`;
+  } else if(adn<80){
+    html+=`<div class="c-res-alerta">⚠️ ADN entre 40 y 80 — zona de estrés. Mantener activas las coberturas cortas en futuros (NQ, ES, FESX).</div>`;
+  }
+
+  const cashNeto=totalVentas-totalCompras;
+  document.getElementById('c-ordenes-lista').innerHTML=html;
+  document.getElementById('c-cash-info').innerHTML=`<div style="display:flex;gap:20px;flex-wrap:wrap">
+    <span>🔴 Total ventas: <strong>${fmtN(totalVentas)} €</strong></span>
+    <span>🟢 Total compras: <strong>${fmtN(totalCompras)} €</strong></span>
+    <span>💰 Cash adicional en cuenta: <strong>${fmtN(cashNeto)} €</strong></span></div>`;
+  const res=document.getElementById('c-resultado');
+  res.style.display='block';
+  setTimeout(()=>res.scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+
+function resetCartera(){
+  document.getElementById('c-resultado').style.display='none';
+  C.gemini=null;C.m6e=null;
+  ['c-gem-on','c-gem-off','c-m6e-pos','c-m6e-neg'].forEach(id=>document.getElementById(id).classList.remove('selected'));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function resetRapido(){
+  document.querySelectorAll('#mode-rapido .q-step').forEach((s,i)=>{if(i>0)s.classList.remove('visible');});
+  document.getElementById('q-resumen').style.display='none';
+  document.getElementById('q-adn-n').value='';
+  document.getElementById('q-adnmin-n').value='';
+  const m=new Date().getMonth()+1;
+  document.getElementById('q-sel-mes').value=m;
+  document.getElementById('q-capital').value=1000000;
+  Object.assign(Q,{mes:null,capital:1000000,m6e:null,gemini:null,spyStop:false,adn:null,hedge:null,adnMin:null});
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ═══ ASISTENTE DEGIRO ═══
+const DW={capital:53300,mes:null,anio:null,m6ePos:null,geminiOn:null,spyStop:false,adn:null,hedgePrev:null,adnMin:null,inerciaVender:[],inerciaComprar:[],hadAdn40:false};
+function dwProgreso(n){document.getElementById('dw-prog').style.width=(n/9*100)+'%';}
+function dwMostrar(id){const el=document.getElementById(id);el.classList.add('visible');setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'nearest'}),50);}
+
+function dwOnCapital(){
+  const v=+document.getElementById('dw-capital').value;
+  if(!v||v<100){document.getElementById('dw-capital-result').innerHTML='<div class="result result-alert">Introduce un valor válido.</div>';return;}
+  DW.capital=v;
+  document.getElementById('dw-capital-result').innerHTML=`<div class="result result-info">Capital DEGIRO: <strong>${fmt(v)} €</strong> — Estacional: ${fmt(v*0.72)} € · Inercia: ${fmt(v*0.18)} € · GEMINI: ${fmt(v*0.10)} €</div>`;
+  dwProgreso(1); setTimeout(()=>dwMostrar('dw-s1'),300);
+}
+function dwOnMes(){
+  const m=+document.getElementById('dw-sel-mes').value;
+  const y=+document.getElementById('dw-sel-anio').value;
+  DW.mes=m; DW.anio=y;
+  const items=CAL[m];
+  const html=items.map(i=>`<strong>${i.a}</strong> ${i.p}% = ${fmt(DW.capital*0.72*i.p/100)} €`).join(' + ');
+  document.getElementById('dw-mes-result').innerHTML=`<div class="mes-box"><div>${MESES[m]} ${y}</div><div class="activos">${html}</div><div class="detalle">Bloque estacional — ${fmt(DW.capital*0.72)} €</div></div>`;
+  dwProgreso(2); setTimeout(()=>dwMostrar('dw-s2'),300);
+}
+function dwOnM6e(pos){
+  DW.m6ePos=pos; sel('dw-b-m6e-pos','dw-b-m6e-neg',pos);
+  document.getElementById('dw-m6e-result').innerHTML=pos
+    ?'<div class="result result-ok">✅ M6E positivo — Sin acción adicional.</div>'
+    :'<div class="result result-alert">🛑 M6E negativo — Stop 6,5% sobre posición estacional si baja.</div>';
+  dwProgreso(2.5); setTimeout(()=>dwMostrar('dw-s3'),300);
+}
+function dwOnGemini(on){
+  DW.geminiOn=on; sel('dw-b-gem-on','dw-b-gem-off',on);
+  if(on){
+    document.getElementById('dw-gem-result').innerHTML=`<div class="result result-ok">📈 RISK-ON — mismos sectores USA/EU que Inercia (${fmt(DW.capital*0.015)} € c/u) + VECA ${fmt(DW.capital*0.025)} € + ERNA ${fmt(DW.capital*0.015)} €</div>`;
+    dwProgreso(3.5); setTimeout(()=>dwMostrar('dw-s3b'),300);
+  } else {
+    document.getElementById('dw-gem-result').innerHTML=`<div class="result result-warn">📉 RISK-OFF — ERNX ${fmt(DW.capital*0.06)} € + VECA ${fmt(DW.capital*0.025)} € + ERNA ${fmt(DW.capital*0.015)} €</div>`;
+    dwProgreso(4); setTimeout(()=>dwMostrar('dw-s4'),300);
+  }
+}
+function dwOnSpyStop(si){
+  DW.spyStop=si; sel('dw-b-spy-si','dw-b-spy-no',si);
+  if(si) DW.geminiOn=false;
+  document.getElementById('dw-spy-result').innerHTML=si
+    ?`<div class="result result-alert">🚨 SPY cayó >8% → Forzar RISK-OFF: ERNX ${fmt(DW.capital*0.06)} € + VECA ${fmt(DW.capital*0.025)} € + ERNA ${fmt(DW.capital*0.015)} €</div>`
+    :'<div class="result result-ok">✅ SPY dentro del rango. GEMINI permanece en Risk-ON.</div>';
+  dwProgreso(4); setTimeout(()=>dwMostrar('dw-s4'),300);
+}
+function dwOnAdn(){
+  const v=document.getElementById('dw-adn-val').value;
+  if(v===''||isNaN(+v)||+v<0||+v>100){document.getElementById('dw-adn-result').innerHTML='<div class="result result-alert">Introduce un valor entre 0 y 100.</div>';return;}
+  DW.adn=+v;
+  const adn=DW.adn, mes=DW.mes||1, [nqPct,esPct]=EXP[mes];
+  let zona,cls;
+  if(adn>=80){zona='Normal (≥ 80) — Sin cobertura';cls='result-ok';}
+  else if(adn>=40){zona='Estrés (40–80) — Abrir cortos en futuros (Trader DEGIRO)';cls='result-warn';}
+  else{zona='Pánico (< 40) — Cortos + cierres parciales en ETFs';cls='result-alert';}
+  let extra='';
+  if(adn<80){
+    const nqNot=nqPct>0?DW.capital*nqPct/100:0, esNot=DW.capital*esPct/100, fsNot=DW.capital*EU_PCT/100;
+    extra=`<div class="result result-short" style="margin-top:8px">📌 ADN < 80 → Abrir cortos (cuenta Trader DEGIRO):<br>${nqPct>0?`• Short <strong>NQ</strong>: ${nqPct}% = <strong>${fmt(nqNot)} €</strong> nocional<br>`:'• Short NQ: 0 € (sin QQQ este mes)<br>'}• Short <strong>ES</strong>: ${esPct}% = <strong>${fmt(esNot)} €</strong> nocional<br>• Short <strong>FESX</strong>: ${EU_PCT}% = <strong>${fmt(fsNot)} €</strong> nocional<br>💰 Margen (~10%): <strong>${fmt((nqNot+esNot+fsNot)*0.10)} €</strong></div>`;
+  }
+  if(adn<40) extra+=`<div class="result result-alert" style="margin-top:8px">🚨 ADN < 40 → Además cerrar parcialmente ETFs: QQQ/SPY 70% · Inercia EU 70% · Inercia USA 25% · SGLD 25%</div>`;
+  document.getElementById('dw-adn-result').innerHTML=`<div class="result ${cls}" style="margin-top:10px">ADN = <strong>${adn}</strong> — ${zona}<div class="adn-bar" style="margin-top:8px"><div class="adn-pin" style="left:${adn}%"></div></div><div class="adn-labels"><span>0 (pánico)</span><span>20</span><span>40</span><span>80</span><span>100</span></div></div>${extra}`;
+  dwProgreso(5); setTimeout(()=>dwMostrar(adn>=40?'dw-s4b':'dw-s5'),300);
+}
+function dwOnHadAdn40(tenia){
+  DW.hadAdn40=tenia;
+  document.getElementById('dw-b-adn40-si').classList.toggle('selected',tenia);
+  document.getElementById('dw-b-adn40-no').classList.toggle('selected',!tenia);
+  document.getElementById('dw-adn40-result').innerHTML=tenia
+    ?'<div class="result result-warn">⟳ Hay recompras pendientes — aparecerán en el resumen final.</div>'
+    :'<div class="result result-ok">✅ Sin cierres parciales previos — posiciones completas.</div>';
+  dwProgreso(5.2); setTimeout(()=>dwMostrar('dw-s5'),300);
+}
+
+function dwOnHedgePrev(activo){
+  DW.hedgePrev=activo; sel('dw-b-hedge-si','dw-b-hedge-no',activo);
+  const adn=DW.adn, mes=DW.mes||1, [nqPct,esPct]=EXP[mes];
+  if(!activo){
+    if(adn<80){
+      const nqNot=nqPct>0?DW.capital*nqPct/100:0, esNot=DW.capital*esPct/100, fsNot=DW.capital*EU_PCT/100;
+      document.getElementById('dw-hedge-result').innerHTML=`<div class="result result-short">🚨 ADN < 80 — Sin cortos → <strong>ABRIR AHORA:</strong><br>${nqPct>0?`• Short NQ: ${nqPct}% = <strong>${fmt(nqNot)} €</strong><br>`:'• Short NQ: 0 €<br>'}• Short ES: ${esPct}% = <strong>${fmt(esNot)} €</strong><br>• Short FESX: ${EU_PCT}% = <strong>${fmt(fsNot)} €</strong><br>💰 Margen: <strong>${fmt((nqNot+esNot+fsNot)*0.10)} €</strong></div>`;
+    } else {
+      document.getElementById('dw-hedge-result').innerHTML=`<div class="result result-ok">✅ ADN ≥ 80 — Sin cobertura necesaria.</div>`;
+    }
+    dwProgreso(6); setTimeout(()=>dwMostrar('dw-s6'),300);
+  } else {
+    document.getElementById('dw-hedge-result').innerHTML='<div class="result result-info">Tienes cortos. Necesito el ADN mínimo para evaluar si hay señal de cierre.</div>';
+    dwProgreso(5.5); setTimeout(()=>dwMostrar('dw-s5b'),300);
+  }
+}
+function dwOnAdnMin(){
+  const v=document.getElementById('dw-adn-min-val').value;
+  if(v===''||isNaN(+v)||+v<0||+v>100){document.getElementById('dw-hedge-exit-result').innerHTML='<div class="result result-alert">Introduce un valor entre 0 y 100.</div>';return;}
+  DW.adnMin=+v;
+  const adn=DW.adn, adnMin=DW.adnMin, mes=DW.mes||1, [nqPct,esPct]=EXP[mes];
+  let html='';
+  if(adn>80) html='<div class="result result-ok">✅ <strong>Salida 1:</strong> ADN > 80 → Cerrar todos los cortos.</div>';
+  else if(adnMin<50&&adn>=50) html=`<div class="result result-ok">✅ <strong>Salida 2:</strong> ADN cruzó arriba el 50 → Cerrar cortos.</div>`;
+  else if(adnMin<20&&adn>=20) html=`<div class="result result-ok">✅ <strong>Salida 3:</strong> ADN cruzó arriba el 20 → Cerrar cortos.</div>`;
+  else{
+    const nqNot2=nqPct>0?DW.capital*nqPct/100:0, esNot2=DW.capital*esPct/100, fsNot2=DW.capital*EU_PCT/100;
+    html=`<div class="result result-short">⚠️ Ninguna condición de salida — Mantener cortos.<br>${nqPct>0?`• Short NQ: ${fmt(nqNot2)} €<br>`:''}• Short ES: ${fmt(esNot2)} €<br>• Short FESX: ${fmt(fsNot2)} €</div>`;
+  }
+  document.getElementById('dw-hedge-exit-result').innerHTML=html;
+  dwProgreso(6); setTimeout(()=>dwMostrar('dw-s6'),300);
+}
+function dwOnInercia(){
+  const usaAct=[document.getElementById('dw-usa-act-1').value,document.getElementById('dw-usa-act-2').value];
+  const usaNew=[document.getElementById('dw-usa-new-1').value,document.getElementById('dw-usa-new-2').value];
+  const euAct=[document.getElementById('dw-eu-act-1').value,document.getElementById('dw-eu-act-2').value];
+  const euNew=[document.getElementById('dw-eu-new-1').value,document.getElementById('dw-eu-new-2').value];
+  const cs=DW.capital*0.045;
+  const usaV=usaAct.filter(s=>s&&!usaNew.includes(s)), usaC=usaNew.filter(s=>s&&!usaAct.includes(s));
+  const euV=euAct.filter(s=>s&&!euNew.includes(s)), euC=euNew.filter(s=>s&&!euAct.includes(s));
+  DW.inerciaVender=[...usaV,...euV]; DW.inerciaComprar=[...usaC,...euC];
+  let html='';
+  if(usaV.length===0&&euV.length===0){
+    html='<div class="result result-ok" style="margin-top:10px">✅ Sin cambios en Inercia — mantener las 4 posiciones.</div>';
+  } else {
+    html='<div class="result result-warn" style="margin-top:10px"><strong>Cambios detectados:</strong><br>';
+    usaV.forEach(s=>{html+=`❌ VENDER ${secLabel(s,USA_SEC)}: <strong>${fmt(cs)} €</strong><br>`;});
+    euV.forEach(s=>{html+=`❌ VENDER ${secLabel(s,EU_SEC)}: <strong>${fmt(cs)} €</strong><br>`;});
+    usaC.forEach(s=>{html+=`✅ COMPRAR ${secLabel(s,USA_SEC)}: <strong>${fmt(cs)} €</strong><br>`;});
+    euC.forEach(s=>{html+=`✅ COMPRAR ${secLabel(s,EU_SEC)}: <strong>${fmt(cs)} €</strong><br>`;});
+    html+='</div>';
+  }
+  document.getElementById('dw-inercia-result').innerHTML=html;
+  dwProgreso(9); setTimeout(()=>dwMostrarResumen(),400);
+}
+function dwMostrarResumen(){
+  const html=generarOrdenesHTML(DW.mes||1,DW.capital,DW.adn||100,DW.geminiOn,DW.m6ePos,DW.hedgePrev,DW.adnMin,DW.spyStop,DW.inerciaVender,DW.inerciaComprar,DW.hadAdn40);
+  document.getElementById('dw-ordenes-lista').innerHTML=html;
+  const res=document.getElementById('dw-resumen');
+  res.style.display='block';
+  showCalcSection('dw');
+  setTimeout(()=>res.scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+function dwResetWizard(){
+  document.querySelectorAll('#mode-degiro .step').forEach((s,i)=>{if(i>0)s.classList.remove('visible');});
+  document.getElementById('dw-resumen').style.display='none';
+  ['dw-capital-result','dw-mes-result','dw-m6e-result','dw-gem-result','dw-spy-result','dw-adn-result','dw-adn40-result','dw-hedge-result','dw-hedge-exit-result','dw-inercia-result']
+    .forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
+  document.getElementById('dw-adn-val').value='';
+  document.getElementById('dw-adn-min-val').value='';
+  document.querySelectorAll('#mode-degiro .btn.selected').forEach(b=>b.classList.remove('selected'));
+  const calcDw=document.getElementById('calc-section-dw');if(calcDw)calcDw.style.display='none';
+  Object.assign(DW,{capital:53300,mes:null,anio:null,m6ePos:null,geminiOn:null,spyStop:false,adn:null,hedgePrev:null,adnMin:null,inerciaVender:[],inerciaComprar:[],hadAdn40:false});
+  dwProgreso(0); window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ═══ DEGIRO ═══
+const D={gemini:null,m6e:null};
+
+function dSetGemini(on){
+  D.gemini=on;
+  document.getElementById('d-gem-on').classList.toggle('selected',on);
+  document.getElementById('d-gem-off').classList.toggle('selected',!on);
+}
+
+function dSetM6e(pos){
+  D.m6e=pos;
+  document.getElementById('d-m6e-pos').classList.toggle('selected',pos);
+  document.getElementById('d-m6e-neg').classList.toggle('selected',!pos);
+}
+
+function calcularDegiro(){
+  const nav=+document.getElementById('d-nav').value;
+  const mes=+document.getElementById('d-mes').value;
+  const adn=+document.getElementById('d-adn').value;
+  if(!nav||nav<100){alert('Introduce el NAV actual de tu cuenta DEGIRO (valor total en €)');return;}
+  if(isNaN(adn)||adn<0||adn>100){alert('Introduce un valor de ADN entre 0 y 100');return;}
+  if(D.gemini===null){alert('Selecciona si GEMINI está en Risk-ON o Risk-OFF');return;}
+  if(D.m6e===null){alert('Selecciona si el Coppock M6E está encima o debajo de cero');return;}
+
+  const gemOn=D.gemini;
+  const estMult=adn<40?0.30:1.0;
+  const usaMult=adn<40?0.75:1.0;
+  const euMult =adn<40?0.30:1.0;
+  const gemSec =gemOn?0.015:0;
+
+  const tgt={
+    est:   nav*0.72*estMult,
+    usa1:  nav*(0.045*usaMult+gemSec),
+    usa2:  nav*(0.045*usaMult+gemSec),
+    eu1:   nav*(0.045*euMult +gemSec),
+    eu2:   nav*(0.045*euMult +gemSec),
+    veca:  nav*0.025,
+    erna:  nav*0.015,
+    ernx:  gemOn?0:nav*0.06,
+    other1:0,
+    other2:0
+  };
+
+  const blocks=['est','usa1','usa2','eu1','eu2','veca','erna','ernx','other1','other2'];
+  const labels={est:'Estacional',usa1:'Inercia USA #1',usa2:'Inercia USA #2',
+    eu1:'Inercia EU #1',eu2:'Inercia EU #2',veca:'GEMINI — VECA',
+    erna:'GEMINI — ERNA',ernx:'GEMINI — ERNX',other1:'Posición extra 1',other2:'Posición extra 2'};
+
+  const pos={};
+  const dg=document.getElementById('mode-degiro');
+  blocks.forEach(b=>{
+    const ticker=(dg.querySelector(`.d-ticker[data-block="${b}"]`).value||'').trim().toUpperCase();
+    const shares=+dg.querySelector(`.d-shares[data-block="${b}"]`).value||0;
+    const price =+dg.querySelector(`.d-price[data-block="${b}"]`).value||0;
+    pos[b]={ticker,shares,price,cur:shares*price};
+  });
+
+  let html='';
+  let totalVentas=0,totalCompras=0;
+  const fmtN=n=>Math.round(n).toLocaleString('es-ES');
+
+  blocks.forEach(b=>{
+    const p=pos[b];
+    const target=tgt[b]||0;
+    const cur=p.cur;
+    const diff=target-cur;
+    const ticker=p.ticker||'—';
+    if(!p.ticker&&!p.shares)return;
+    const diffAbs=Math.abs(diff);
+    const sharesNum=(p.price>0&&diffAbs>5)?Math.round(diffAbs/p.price):null;
+
+    if(diffAbs<10){
+      html+=`<div class="c-res-mantener"><span>✅ <strong>${ticker}</strong> — ${labels[b]}</span><span class="c-res-imp">${fmtN(cur)} € — Mantener</span></div>`;
+    } else if(diff<0){
+      totalVentas+=diffAbs;
+      const sharesStr=sharesNum?`${sharesNum.toLocaleString('es-ES')} acciones`:'(ver acciones)';
+      const targetStr=target>0?`dejar ${fmtN(target)} €`:'cerrar posición';
+      html+=`<div class="c-res-venta"><span>🔴 <strong>VENDER ${ticker}</strong> — ${labels[b]} <small>(${targetStr})</small></span><span class="c-res-imp">Vender ${sharesStr} · libera ${fmtN(diffAbs)} €</span></div>`;
+    } else {
+      totalCompras+=diff;
+      const sharesStr=sharesNum?`${sharesNum.toLocaleString('es-ES')} acciones`:'X acc (÷ precio apertura)';
+      html+=`<div class="c-res-compra"><span>🟢 <strong>COMPRAR ${ticker}</strong> — ${labels[b]}</span><span class="c-res-imp">${sharesStr} → ${fmtN(diff)} €</span></div>`;
+    }
+  });
+
+  if(adn<80){
+    const [nqPct,esPct]=EXP[mes];
+    const nqNot=nqPct>0?nav*nqPct/100:0;
+    const esNot=nav*esPct/100;
+    const fsNot=nav*EU_PCT/100;
+    const hedgeMargen=(nqNot+esNot+fsNot)*0.10;
+    html+=`<div class="c-res-alerta" style="background:#ffe4e4;color:#5a0000;border-left:4px solid #8B0000;font-weight:600;margin-top:10px">📌 ADN &lt; 80 → Abrir cortos en futuros (cuenta Trader DEGIRO):<br>${nqPct>0?`• Short NQ: ${nqPct}% = <strong>${fmtN(nqNot)} €</strong> nocional<br>`:'• Short NQ: 0 € (sin QQQ este mes)<br>'}• Short ES: ${esPct}% = <strong>${fmtN(esNot)} €</strong> nocional<br>• Short FESX: ${EU_PCT}% = <strong>${fmtN(fsNot)} €</strong> nocional<br>💰 Margen DEGIRO (~10%): <strong>${fmtN(hedgeMargen)} €</strong></div>`;
+  }
+  if(D.m6e===false){
+    html+=`<div class="c-res-alerta">⚠️ Coppock M6E negativo — Stop 6,5% sobre la posición estacional (${pos.est.ticker}). Si cae un 6,5% desde tu precio medio, vender toda la posición estacional.</div>`;
+  }
+  if(adn<40){
+    html+=`<div class="c-res-alerta">🚨 ADN &lt; 40 — posiciones reducidas por protección anti-crash. El efectivo resultante (~${fmtN(nav*0.589)} €) permanece en cuenta hasta que ADN supere 40.</div>`;
+  } else if(adn<80){
+    html+=`<div class="c-res-alerta">⚠️ ADN entre 40 y 80 — zona de estrés. Mantener activas las coberturas cortas en futuros (NQ, ES, FESX).</div>`;
+  }
+
+  const cashNeto=totalVentas-totalCompras;
+  document.getElementById('d-ordenes-lista').innerHTML=html;
+  document.getElementById('d-cash-info').innerHTML=`<div style="display:flex;gap:20px;flex-wrap:wrap">
+    <span>🔴 Total ventas: <strong>${fmtN(totalVentas)} €</strong></span>
+    <span>🟢 Total compras: <strong>${fmtN(totalCompras)} €</strong></span>
+    <span>💰 Cash neto en cuenta: <strong>${fmtN(cashNeto)} €</strong></span></div>`;
+  const res=document.getElementById('d-resultado');
+  res.style.display='block';
+  setTimeout(()=>res.scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+
+function resetDegiro(){
+  document.getElementById('d-resultado').style.display='none';
+  D.gemini=null;D.m6e=null;
+  ['d-gem-on','d-gem-off','d-m6e-pos','d-m6e-neg'].forEach(id=>document.getElementById(id).classList.remove('selected'));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ═══ CALCULADORA DE ACCIONES Y CONTRATOS (Gaps 1 & 2) ═══
+function showCalcSection(mode){
+  const st=mode==='ib'?S:DW;
+  const mes=st.mes||1,capital=st.capital,adn=st.adn!=null?st.adn:100;
+  const items=CAL[mes];
+  const prevItems=CAL[mes===1?12:mes-1];
+  const [nqPct,esPct]=EXP[mes];
+  const gemOn=st.geminiOn&&!st.spyStop;
+  const fc=n=>Math.round(n).toLocaleString('es-ES');
+
+  // Construir lista de instrumentos a operar
+  let rows=[];
+  // Estacional — ventas
+  prevItems.forEach(i=>{
+    const imp=Math.round(capital*0.72*i.p/100);
+    if(imp>0) rows.push({id:`${mode}-sell-${i.a}`,accion:'VENDER',ticker:i.a,label:`${i.a} — Estacional (vender)`,imp});
+  });
+  // Estacional — compras
+  items.forEach(i=>{
+    const imp=Math.round(capital*0.72*i.p/100);
+    if(imp>0) rows.push({id:`${mode}-buy-${i.a}`,accion:'COMPRAR',ticker:i.a,label:`${i.a} — Estacional (comprar)`,imp});
+  });
+  // Inercia ventas
+  (st.inerciaVender||[]).forEach(s=>{
+    rows.push({id:`${mode}-isell-${s}`,accion:'VENDER',ticker:s,label:`${secLabel(s,[...USA_SEC,...EU_SEC])} — Inercia`,imp:Math.round(capital*0.045)});
+  });
+  // Inercia compras
+  (st.inerciaComprar||[]).forEach(s=>{
+    rows.push({id:`${mode}-ibuy-${s}`,accion:'COMPRAR',ticker:s,label:`${secLabel(s,[...USA_SEC,...EU_SEC])} — Inercia`,imp:Math.round(capital*0.045)});
+  });
+  // GEMINI
+  if(gemOn){
+    rows.push({id:`${mode}-veca`,accion:'COMPRAR',ticker:'VECA',label:'VECA — GEMINI Risk-ON',imp:Math.round(capital*0.025)});
+    rows.push({id:`${mode}-erna`,accion:'COMPRAR',ticker:'ERNA',label:'ERNA — GEMINI Risk-ON',imp:Math.round(capital*0.015)});
+  } else {
+    rows.push({id:`${mode}-ernx`,accion:'COMPRAR',ticker:'ERNX',label:'ERNX — GEMINI Risk-OFF',imp:Math.round(capital*0.06)});
+  }
+
+  // Deduplicar por id
+  const seen=new Set();
+  rows=rows.filter(r=>{if(seen.has(r.id))return false;seen.add(r.id);return true;});
+
+  // Tabla ETFs
+  let html=`<div style="font-size:13px;font-weight:700;color:var(--blue);margin-bottom:8px">ETFs</div>`;
+  html+=`<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px">`;
+  html+=`<thead><tr><th style="background:var(--blue);color:#fff;padding:6px 8px;text-align:left">Acción</th><th style="background:var(--blue);color:#fff;padding:6px 8px;text-align:left">Instrumento</th><th style="background:var(--blue);color:#fff;padding:6px 8px;text-align:right">Importe</th><th style="background:var(--blue);color:#fff;padding:6px 8px;text-align:center">Precio (€)</th><th style="background:var(--blue);color:#fff;padding:6px 8px;text-align:center">Nº acciones</th></tr></thead><tbody>`;
+  rows.forEach((r,idx)=>{
+    const bg=idx%2===0?'#f7f9fc':'#fff';
+    const color=r.accion==='COMPRAR'?'#155724':'#721c24';
+    html+=`<tr style="background:${bg}">
+      <td style="padding:6px 8px;border-bottom:1px solid #eee;font-weight:700;color:${color}">${r.accion==='COMPRAR'?'🟢':'🔴'} ${r.accion}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #eee"><strong>${r.ticker}</strong><br><small style="color:#888">${r.label}</small></td>
+      <td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right;font-weight:700">${fc(r.imp)} €</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:center"><input type="number" id="cp-${r.id}" min="0" step="0.01" placeholder="0.00" style="width:85px;padding:5px;border:1.5px solid #ccc;border-radius:4px;font-size:12px;text-align:right" oninput="updateShares('${r.id}',${r.imp})"></td>
+      <td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:center;font-weight:700;color:var(--blue)" id="cn-${r.id}">—</td>
+    </tr>`;
+  });
+  html+=`</tbody></table>`;
+
+  // Futuros (si ADN < 80)
+  if(adn<80){
+    const nqNot=nqPct>0?Math.round(capital*nqPct/100):0;
+    const esNot=Math.round(capital*esPct/100);
+    const fsNot=Math.round(capital*EU_PCT/100);
+    html+=`<div style="font-size:13px;font-weight:700;color:var(--blue);margin-bottom:6px">Futuros de cobertura</div>`;
+    html+=`<div class="nota" style="margin-bottom:10px">Multiplicadores estándar: NQ mini=$20/pto · ES mini=$50/pto · FESX=€10/pto. Si usas micros (MNQ/MES/FSXE), multiplica el resultado ×10.</div>`;
+    html+=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px">`;
+    html+=`<div><label style="font-size:12px;color:#555;font-weight:600;display:block;margin-bottom:4px">EUR/USD</label><input type="number" id="cf-eurusd-${mode}" value="1.08" step="0.001" min="0.5" style="width:100%;padding:7px;border:1.5px solid #ccc;border-radius:5px;font-size:13px" oninput="updateContracts('${mode}',${nqNot},${esNot},${fsNot},${nqPct})"></div>`;
+    if(nqPct>0) html+=`<div><label style="font-size:12px;color:#555;font-weight:600;display:block;margin-bottom:4px">NQ — precio USD · nocional ${fc(nqNot)} €</label><input type="number" id="cf-nq-${mode}" min="0" step="1" placeholder="ej: 21000" style="width:100%;padding:7px;border:1.5px solid #ccc;border-radius:5px;font-size:13px" oninput="updateContracts('${mode}',${nqNot},${esNot},${fsNot},${nqPct})"><div id="cr-nq-${mode}" style="font-size:12px;font-weight:700;color:#5a0000;margin-top:3px"></div></div>`;
+    html+=`<div><label style="font-size:12px;color:#555;font-weight:600;display:block;margin-bottom:4px">ES — precio USD · nocional ${fc(esNot)} €</label><input type="number" id="cf-es-${mode}" min="0" step="1" placeholder="ej: 5800" style="width:100%;padding:7px;border:1.5px solid #ccc;border-radius:5px;font-size:13px" oninput="updateContracts('${mode}',${nqNot},${esNot},${fsNot},${nqPct})"><div id="cr-es-${mode}" style="font-size:12px;font-weight:700;color:#5a0000;margin-top:3px"></div></div>`;
+    html+=`<div><label style="font-size:12px;color:#555;font-weight:600;display:block;margin-bottom:4px">FESX — precio EUR · nocional ${fc(fsNot)} €</label><input type="number" id="cf-fesx-${mode}" min="0" step="1" placeholder="ej: 5200" style="width:100%;padding:7px;border:1.5px solid #ccc;border-radius:5px;font-size:13px" oninput="updateContracts('${mode}',${nqNot},${esNot},${fsNot},${nqPct})"><div id="cr-fesx-${mode}" style="font-size:12px;font-weight:700;color:#5a0000;margin-top:3px"></div></div>`;
+    html+=`</div>`;
+  }
+
+  document.getElementById(`calc-fields-${mode}`).innerHTML=html;
+  document.getElementById(`calc-section-${mode}`).style.display='block';
+}
+
+function updateShares(rowId,importe){
+  const price=+(document.getElementById('cp-'+rowId)||{}).value;
+  const el=document.getElementById('cn-'+rowId);
+  if(el) el.textContent=price>0?Math.round(importe/price).toLocaleString('es-ES')+' acc':'—';
+}
+
+function updateContracts(mode,nqNot,esNot,fsNot,nqPct){
+  const eurusd=+(document.getElementById(`cf-eurusd-${mode}`)||{value:1.08}).value||1.08;
+  if(nqPct>0){
+    const nqP=+(document.getElementById(`cf-nq-${mode}`)||{}).value;
+    const el=document.getElementById(`cr-nq-${mode}`);
+    if(el) el.textContent=nqP>0?`→ ${Math.round(nqNot/(nqP*20/eurusd))} contratos mini NQ (o ${Math.round(nqNot/(nqP*2/eurusd))} micro MNQ)`:'';
+  }
+  const esP=+(document.getElementById(`cf-es-${mode}`)||{}).value;
+  const esEl=document.getElementById(`cr-es-${mode}`);
+  if(esEl) esEl.textContent=esP>0?`→ ${Math.round(esNot/(esP*50/eurusd))} contratos mini ES (o ${Math.round(esNot/(esP*5/eurusd))} micro MES)`:'';
+  const fsP=+(document.getElementById(`cf-fesx-${mode}`)||{}).value;
+  const fsEl=document.getElementById(`cr-fesx-${mode}`);
+  if(fsEl) fsEl.textContent=fsP>0?`→ ${Math.round(fsNot/(fsP*10))} contratos FESX (o ${Math.round(fsNot/fsP)} micro FSXE)`:'';
+}
+</script>
+</body>
+</html>
